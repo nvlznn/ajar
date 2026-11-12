@@ -53,6 +53,15 @@ function stableStringify(v: unknown): string {
   return JSON.stringify(v);
 }
 
+const normTitle = (t: string) => t.toLowerCase().replace(/[\s\p{P}\p{S}]+/gu, "");
+
+/** Same opportunity if one normalized title contains the other (tolerates small edits/suffixes). */
+export function sameTitle(a: string, b: string): boolean {
+  const x = normTitle(a);
+  const y = normTitle(b);
+  return x === y || x.includes(y) || y.includes(x);
+}
+
 const isEmpty = (v: unknown) =>
   v === null || v === undefined || v === "" || (Array.isArray(v) && v.length === 0);
 
@@ -150,7 +159,16 @@ export async function ingest(rawItems: unknown[], source: string): Promise<Inges
 
   for (const { index, item } of parsed) {
     try {
-      const key = item.key?.trim() || normalizeUrl(item.url);
+      let key = item.key?.trim() || normalizeUrl(item.url);
+      if (!item.key?.trim()) {
+        // Listing pages (e.g. a school's scholarship index) host many distinct opportunities under one URL.
+        // If the URL key is taken by a clearly different title, key this item by URL + title instead.
+        const [taken] = await db
+          .select({ title: opportunities.title })
+          .from(opportunities)
+          .where(eq(opportunities.key, key));
+        if (taken && !sameTitle(taken.title, item.title)) key = `${key}#${normTitle(item.title)}`;
+      }
       let parentId: string | null = null;
       if (item.parent_key) {
         const pk = item.parent_key.includes("://") ? normalizeUrl(item.parent_key) : item.parent_key;
