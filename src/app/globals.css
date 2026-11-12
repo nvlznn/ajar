@@ -2,8 +2,8 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-/* Dark mode follows the system setting. */
-@custom-variant dark (@media (prefers-color-scheme: dark));
+/* Theme is resolved to light/dark by the inline script in layout.tsx (setting: light | dark | system). */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 @theme inline {
   --color-background: var(--background);
@@ -92,10 +92,12 @@
   --cat-teal: #30b0c7;
   --cat-indigo: #5856d6;
   --cat-gray: #8e8e93;
+  color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  & {
     --background: #000000;
     --foreground: #f5f5f7;
     --grouped: #1c1c1e;

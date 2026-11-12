@@ -1,4 +1,4 @@
-import { CATEGORY_META, type Category } from "@/lib/categories";
+import { CATEGORY_COLOR, type Category } from "@/lib/categories";
 import { cn } from "@/lib/utils";
 
 export function CategoryDot({ category, className }: { category: Category; className?: string }) {
@@ -6,16 +6,16 @@ export function CategoryDot({ category, className }: { category: Category; class
     <span
       aria-hidden
       className={cn("inline-block size-2 shrink-0 rounded-full", className)}
-      style={{ backgroundColor: CATEGORY_META[category].color }}
+      style={{ backgroundColor: CATEGORY_COLOR[category] }}
     />
   );
 }
 
-export function CategoryLabel({ category, className }: { category: Category; className?: string }) {
+export function CategoryLabel({ category, label, className }: { category: Category; label: string; className?: string }) {
   return (
     <span className={cn("inline-flex items-center gap-1.5", className)}>
       <CategoryDot category={category} />
-      {CATEGORY_META[category].label}
+      {label}
     </span>
   );
 }

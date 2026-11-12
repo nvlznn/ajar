@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { CATEGORY_META, type Category } from "@/lib/categories";
+import { CATEGORY_COLOR, type Category } from "@/lib/categories";
 import { daysUntil, taipei } from "@/lib/format";
+import type { Dict } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 type Item = { id: string; title: string; category: Category; deadlineAt: Date | null };
@@ -9,7 +10,7 @@ const DAYS = 15; // today + 14
 const MAX_DOTS = 6;
 
 /** The page's one expressive element: the next 14 days as a ruler, one dot per deadline. */
-export function DeadlineRuler({ items, now = new Date() }: { items: Item[]; now?: Date }) {
+export function DeadlineRuler({ items, t, now = new Date() }: { items: Item[]; t: Dict; now?: Date }) {
   const byDay: Item[][] = Array.from({ length: DAYS }, () => []);
   for (const it of items) {
     if (!it.deadlineAt) continue;
@@ -18,12 +19,11 @@ export function DeadlineRuler({ items, now = new Date() }: { items: Item[]; now?
   }
 
   return (
-    <div className="grid grid-cols-[repeat(15,minmax(0,1fr))]" role="list" aria-label="接下來 14 天的截止日">
+    <div className="grid grid-cols-[repeat(15,minmax(0,1fr))]" role="list" aria-label={t.home.rulerAria}>
       {byDay.map((day, i) => {
-        const date = new Date(now.getTime() + i * 86_400_000);
-        const t = taipei(date);
-        const weekend = t.weekday === "週六" || t.weekday === "週日";
-        const urgent = i <= 3;
+        const date = taipei(new Date(now.getTime() + i * 86_400_000));
+        const weekend = date.dow === 0 || date.dow === 6;
+        const urgent = i > 0 && i <= 3 && day.length > 0;
         const extra = day.length - MAX_DOTS;
         return (
           <div key={i} role="listitem" className="flex flex-col items-center">
@@ -32,10 +32,10 @@ export function DeadlineRuler({ items, now = new Date() }: { items: Item[]; now?
                 <Link
                   key={it.id}
                   href={`/o/${it.id}`}
-                  title={`${it.title}（${CATEGORY_META[it.category].label}）`}
+                  title={`${it.title} (${t.categories[it.category]})`}
                   aria-label={it.title}
                   className="block size-2.5 rounded-full transition-transform hover:scale-125"
-                  style={{ backgroundColor: CATEGORY_META[it.category].color }}
+                  style={{ backgroundColor: CATEGORY_COLOR[it.category] }}
                 />
               ))}
               {extra > 0 && <span className="text-[11px] leading-none text-muted-foreground tnum">+{extra}</span>}
@@ -56,10 +56,8 @@ export function DeadlineRuler({ items, now = new Date() }: { items: Item[]; now?
                 i % 2 === 1 && "max-sm:invisible",
               )}
             >
-              <div>{i === 0 ? "今天" : `${t.m}/${t.d}`}</div>
-              <div className={cn("max-sm:hidden", urgent && i > 0 && day.length ? "text-urgent" : "")}>
-                {t.weekday.slice(1)}
-              </div>
+              <div>{i === 0 ? t.common.today : `${date.m}/${date.d}`}</div>
+              <div className={cn("max-sm:hidden", urgent && "text-urgent")}>{t.weekdaysShort[date.dow]}</div>
             </div>
           </div>
         );

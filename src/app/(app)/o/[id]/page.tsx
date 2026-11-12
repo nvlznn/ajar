@@ -5,35 +5,10 @@ import { CategoryLabel } from "@/components/category-dot";
 import { StatusControl } from "@/components/status-control";
 import { db } from "@/db";
 import { opportunities, opportunityRevisions, scores, userStatus } from "@/db/schema";
-import { ELIGIBILITY_LABEL } from "@/lib/categories";
-import { daysUntil, formatDate, formatStageDate, relativeDays } from "@/lib/format";
+import { daysUntil, formatDate, formatStageDate } from "@/lib/format";
+import type { Dict } from "@/lib/i18n";
+import { getDict } from "@/lib/locale";
 import { requireUser } from "@/lib/session";
-
-const REQUIREMENT_LABEL: Record<string, string> = {
-  resume: "履歷",
-  recommendation: "推薦信",
-  portfolio: "作品集",
-  proposal: "提案或企劃書",
-  transcript: "成績單",
-  language_test: "語言成績",
-  essay: "申請短文",
-  interview: "面試",
-};
-
-const FIELD_LABEL: Record<string, string> = {
-  title: "名稱",
-  stages: "時程",
-  deadlineAt: "截止日",
-  deadlineEstimated: "預估標記",
-  summary: "簡介",
-  url: "連結",
-  eligibility: "資格",
-  compensation: "報酬與費用",
-  requirements: "準備資料",
-  prepDays: "準備天數",
-  organizer: "主辦單位",
-  tags: "標籤",
-};
 
 function Group({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -46,7 +21,7 @@ function Group({ title, children }: { title: string; children: React.ReactNode }
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="grid grid-cols-[96px_minmax(0,1fr)] gap-4 px-4 py-3 text-[15px] sm:grid-cols-[140px_minmax(0,1fr)]">
+    <div className="grid grid-cols-[104px_minmax(0,1fr)] gap-4 px-4 py-3 text-[15px] sm:grid-cols-[160px_minmax(0,1fr)]">
       <div className="text-muted-foreground">{label}</div>
       <div className="min-w-0 break-words">{children}</div>
     </div>
@@ -55,6 +30,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 
 export default async function OpportunityPage({ params }: PageProps<"/o/[id]">) {
   const user = await requireUser();
+  const { t } = await getDict();
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
 
@@ -66,6 +42,7 @@ export default async function OpportunityPage({ params }: PageProps<"/o/[id]">) 
     .where(eq(opportunities.id, id));
   if (!row) notFound();
   const { o, s, st } = row;
+  const L = t.detail;
 
   const [children, revisions, parent] = await Promise.all([
     db.select().from(opportunities).where(eq(opportunities.parentId, o.id)).orderBy(asc(opportunities.title)),
@@ -83,24 +60,23 @@ export default async function OpportunityPage({ params }: PageProps<"/o/[id]">) 
   const days = o.deadlineAt ? daysUntil(o.deadlineAt) : null;
   const elig = o.eligibility;
   const comp = o.compensation;
+  const ts = elig?.team_size;
   const teamSize =
-    elig?.team_size && (elig.team_size.min || elig.team_size.max)
-      ? elig.team_size.min === elig.team_size.max
-        ? `${elig.team_size.min} 人`
-        : `${elig.team_size.min ?? 1}–${elig.team_size.max ?? "不限"} 人`
+    ts && (ts.min || ts.max)
+      ? ts.min === ts.max
+        ? L.teamExact(ts.min!)
+        : L.teamRange(ts.min ?? 1, ts.max ? String(ts.max) : L.unlimited)
       : null;
+  const eligLabel = s ? (t.eligibility[s.eligibility as keyof Dict["eligibility"]] ?? s.eligibility) : "";
 
   return (
     <article className="max-w-[720px]">
-      <Link
-        href={parent[0] ? `/o/${parent[0].id}` : "/"}
-        className="text-[13px] text-tint hover:underline"
-      >
-        {parent[0] ? parent[0].title : "所有機會"}
+      <Link href={parent[0] ? `/o/${parent[0].id}` : "/"} className="text-[13px] text-tint hover:underline">
+        {parent[0] ? parent[0].title : L.back}
       </Link>
 
       <div className="mt-6 text-[13px] text-muted-foreground">
-        <CategoryLabel category={o.category} />
+        <CategoryLabel category={o.category} label={t.categories[o.category]} />
       </div>
       <h1 className="mt-2 text-[34px] font-semibold leading-[40px] tracking-[-0.02em]">{o.title}</h1>
       {o.organizer && <p className="mt-2 text-[17px] text-muted-foreground">{o.organizer}</p>}
@@ -108,18 +84,19 @@ export default async function OpportunityPage({ params }: PageProps<"/o/[id]">) 
       <p className="mt-6 text-[17px] leading-7">
         {o.deadlineAt ? (
           <>
-            {o.deadlineEstimated ? "預估" : ""}
-            <span className="font-semibold">{formatDate(o.deadlineAt, true)}</span> 截止
+            <span className="font-semibold">{L.due(formatDate(o.deadlineAt, true), o.deadlineEstimated)}</span>
             {days !== null && (
-              <span className={days >= 0 && days <= 3 ? "text-urgent" : "text-muted-foreground"}>
-                {"，"}
-                {relativeDays(days)}
-              </span>
+              <>
+                {t.common.listSep}
+                <span className={days >= 0 && days <= 3 ? "text-urgent" : "text-muted-foreground"}>
+                  {t.relative(days)}
+                </span>
+              </>
             )}
-            {o.prepDays ? <span className="text-muted-foreground">。大約需要 {o.prepDays} 天準備</span> : null}
+            {o.prepDays ? <span className="text-muted-foreground">{L.prep(o.prepDays)}</span> : null}
           </>
         ) : (
-          <span className="text-muted-foreground">沒有固定截止日，隨時可以申請。</span>
+          <span className="text-muted-foreground">{L.rollingNote}</span>
         )}
       </p>
 
@@ -130,16 +107,16 @@ export default async function OpportunityPage({ params }: PageProps<"/o/[id]">) 
           rel="noopener noreferrer"
           className="inline-flex h-9 items-center rounded-full bg-tint px-5 text-[15px] font-medium text-white hover:opacity-90"
         >
-          前往官方頁面
+          {L.open}
         </a>
-        <StatusControl opportunityId={o.id} status={st?.status ?? null} />
+        <StatusControl opportunityId={o.id} status={st?.status ?? null} labels={t.status} />
       </div>
 
       {s && (
         <section className="mt-10 flex gap-5">
           <div className="text-[40px] font-semibold leading-none tracking-tight tnum">{s.score}</div>
           <div className="pt-0.5">
-            <div className="text-[15px] font-medium">適合度，{ELIGIBILITY_LABEL[s.eligibility] ?? s.eligibility}資格</div>
+            <div className="text-[15px] font-medium">{L.fit(eligLabel)}</div>
             {s.reason && <p className="mt-1 text-[15px] leading-[22px] text-muted-foreground">{s.reason}</p>}
           </div>
         </section>
@@ -148,48 +125,48 @@ export default async function OpportunityPage({ params }: PageProps<"/o/[id]">) 
       {o.summary && <p className="mt-10 text-[17px] leading-7">{o.summary}</p>}
 
       {o.stages.length > 0 && (
-        <Group title="時程">
+        <Group title={L.timeline}>
           {o.stages.map((stage, i) => (
             <Row key={i} label={stage.label}>
               <span className="tnum">
                 {formatStageDate(stage.start)}
-                {stage.end ? ` 至 ${formatStageDate(stage.end)}` : ""}
+                {stage.end ? `${L.to}${formatStageDate(stage.end)}` : ""}
               </span>
-              {stage.estimated && <span className="ml-2 text-muted-foreground">預估</span>}
+              {stage.estimated && <span className="ml-2 text-muted-foreground">{t.common.estimated}</span>}
             </Row>
           ))}
         </Group>
       )}
 
       {(elig?.text || teamSize || elig?.nationality) && (
-        <Group title="資格">
-          {elig?.text && <Row label="條件">{elig.text}</Row>}
-          {elig?.nationality && <Row label="國籍">{elig.nationality}</Row>}
-          {teamSize && <Row label="組隊">{teamSize}</Row>}
+        <Group title={L.eligibility}>
+          {elig?.text && <Row label={L.conditions}>{elig.text}</Row>}
+          {elig?.nationality && <Row label={L.nationality}>{elig.nationality}</Row>}
+          {teamSize && <Row label={L.team}>{teamSize}</Row>}
         </Group>
       )}
 
       {comp && (comp.prize || comp.salary || comp.travel_support || comp.fee) && (
-        <Group title="報酬與費用">
-          {comp.prize && <Row label="獎金">{comp.prize}</Row>}
-          {comp.salary && <Row label="薪資或津貼">{comp.salary}</Row>}
-          {comp.travel_support && <Row label="旅費補助">{comp.travel_support}</Row>}
-          {comp.fee && <Row label="費用">{comp.fee}</Row>}
+        <Group title={L.money}>
+          {comp.prize && <Row label={L.prize}>{comp.prize}</Row>}
+          {comp.salary && <Row label={L.salary}>{comp.salary}</Row>}
+          {comp.travel_support && <Row label={L.travel}>{comp.travel_support}</Row>}
+          {comp.fee && <Row label={L.fee}>{comp.fee}</Row>}
         </Group>
       )}
 
       {o.requirements.length > 0 && (
-        <Group title="要準備的東西">
+        <Group title={L.prepare}>
           {o.requirements.map((r) => (
-            <Row key={r} label={REQUIREMENT_LABEL[r] ?? "其他"}>
-              {REQUIREMENT_LABEL[r] ? <span className="text-muted-foreground">需要</span> : r.replace(/^other:\s*/, "")}
+            <Row key={r} label={L.requirements[r] ?? L.other}>
+              {L.requirements[r] ? <span className="text-muted-foreground">{L.needed}</span> : r.replace(/^other:\s*/, "")}
             </Row>
           ))}
         </Group>
       )}
 
       {children.length > 0 && (
-        <Group title={`可選項目（${children.length}）`}>
+        <Group title={L.children(children.length)}>
           {children.map((c) => (
             <Link key={c.id} href={`/o/${c.id}`} className="block px-4 py-3 text-[15px] hover:text-tint">
               {c.title}
@@ -199,33 +176,37 @@ export default async function OpportunityPage({ params }: PageProps<"/o/[id]">) 
         </Group>
       )}
 
-      <Group title="資料來源">
-        <Row label="地點">
-          {o.locationMode === "online" ? "線上" : [o.city, o.country].filter(Boolean).join("，") || "未標示"}
+      <Group title={L.source}>
+        <Row label={L.location}>
+          {o.locationMode === "online"
+            ? t.common.online
+            : [o.city, o.country].filter(Boolean).join(t.common.listSep) || L.unknownLocation}
         </Row>
         {o.sourceUrl && o.sourceUrl !== o.url && (
-          <Row label="來源">
+          <Row label={L.from}>
             <a href={o.sourceUrl} target="_blank" rel="noopener noreferrer" className="text-tint hover:underline">
               {new URL(o.sourceUrl).hostname}
             </a>
           </Row>
         )}
-        <Row label="最後確認">
+        <Row label={L.verified}>
           <span className="tnum">{formatDate(o.lastVerifiedAt, true)}</span>
-          {o.confidence === "low" && <span className="ml-2 text-muted-foreground">未從官方頁面確認，請再核對</span>}
+          {o.confidence === "low" && <span className="ml-2 text-muted-foreground">{L.lowConfidence}</span>}
         </Row>
-        {o.recurringAnnual && <Row label="週期">每年舉辦</Row>}
+        {o.recurringAnnual && <Row label={L.cycle}>{L.annual}</Row>}
       </Group>
 
       {revisions.length > 0 && (
-        <Group title="變更紀錄">
+        <Group title={L.history}>
           {revisions.map((r) => (
             <Row key={r.id} label={formatDate(r.createdAt, true)}>
               {r.action === "create"
-                ? "收錄"
-                : `更新${Object.keys((r.after as object) ?? {})
-                    .map((k) => FIELD_LABEL[k] ?? k)
-                    .join("、")}`}
+                ? L.created
+                : L.updated(
+                    Object.keys((r.after as object) ?? {})
+                      .map((k) => L.fields[k] ?? k)
+                      .join(L.fieldSep),
+                  )}
               <span className="ml-2 text-[13px] text-muted-foreground">{r.source}</span>
             </Row>
           ))}

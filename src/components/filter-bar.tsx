@@ -2,8 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
-import { setRegionMode } from "@/app/actions";
-import { CATEGORY_META } from "@/lib/categories";
+import type { Dict } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 export function Segmented<T extends string>({
@@ -40,7 +39,7 @@ export function Segmented<T extends string>({
   );
 }
 
-export function FilterBar({ regionMode }: { regionMode: "focus" | "all" }) {
+export function FilterBar({ labels, categories }: { labels: Dict["filters"]; categories: Dict["categories"] }) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -53,15 +52,15 @@ export function FilterBar({ regionMode }: { regionMode: "focus" | "all" }) {
     start(() => router.replace(`${pathname}?${next.toString()}`, { scroll: false }));
   };
 
-  const view = params.get("view") ?? "open";
+  const view = (params.get("view") ?? "open") as "open" | "ineligible" | "archived";
 
   return (
     <div className={cn("flex flex-wrap items-center gap-2 transition-opacity", pending && "opacity-60")}>
       <input
         type="search"
         defaultValue={params.get("q") ?? ""}
-        placeholder="搜尋名稱或主辦單位"
-        aria-label="搜尋"
+        placeholder={labels.search}
+        aria-label={labels.searchAria}
         onKeyDown={(e) => {
           if (e.key === "Enter") set("q", e.currentTarget.value.trim() || null);
         }}
@@ -71,39 +70,28 @@ export function FilterBar({ regionMode }: { regionMode: "focus" | "all" }) {
         className="h-8 w-full rounded-lg bg-grouped px-3 text-[13px] placeholder:text-muted-foreground sm:w-56"
       />
       <select
-        aria-label="類別"
+        aria-label={labels.category}
         value={params.get("category") ?? ""}
         onChange={(e) => set("category", e.target.value || null)}
         className="h-8 rounded-lg bg-grouped px-2.5 text-[13px]"
       >
-        <option value="">所有類別</option>
-        {Object.entries(CATEGORY_META).map(([k, v]) => (
+        <option value="">{labels.allCategories}</option>
+        {Object.entries(categories).map(([k, v]) => (
           <option key={k} value={k}>
-            {v.label}
+            {v}
           </option>
         ))}
       </select>
       <Segmented
-        label="顯示"
-        value={view as "open" | "ineligible" | "archived"}
+        label={labels.show}
+        value={view}
         onChange={(v) => set("view", v === "open" ? null : v)}
         options={[
-          { value: "open", label: "開放中" },
-          { value: "ineligible", label: "含不符合" },
-          { value: "archived", label: "已截止" },
+          { value: "open", label: labels.open },
+          { value: "ineligible", label: labels.withIneligible },
+          { value: "archived", label: labels.archived },
         ]}
       />
-      <div className="sm:ml-auto">
-        <Segmented
-          label="地區範圍"
-          value={regionMode}
-          onChange={(v) => start(() => setRegionMode(v))}
-          options={[
-            { value: "focus", label: "台灣與有補助" },
-            { value: "all", label: "全世界" },
-          ]}
-        />
-      </div>
     </div>
   );
 }

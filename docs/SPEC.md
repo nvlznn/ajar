@@ -40,6 +40,7 @@ Ajar collects every opportunity a student can join or apply for (hackathons, exc
 - UI in Traditional Chinese; titles kept in original language.
 - Home: "due within 14 days" + "tracking" on top, deadline-sorted table below (cards on mobile), calendar tab.
 - Profile editor; saving triggers rescoring.
+- Settings page: theme (light / dark / system, per device), interface language (中文 / English, cookie; strings in `src/lib/i18n.ts`, opportunity content not translated), region scope, account + sign out.
 - Auto-fill v1: generate per-question drafts from profile + answer bank. Browser extension later.
 
 ## Notifications

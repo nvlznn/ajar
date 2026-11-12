@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { themeScript } from "@/lib/theme";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -8,7 +9,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="zh-Hant">
+    // data-theme is set by themeScript before hydration.
+    <html lang="zh-Hant" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body className="min-h-dvh">{children}</body>
     </html>
   );

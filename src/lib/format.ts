@@ -1,14 +1,12 @@
 const TZ = "Asia/Taipei";
-const WEEKDAY = ["週日", "週一", "週二", "週三", "週四", "週五", "週六"];
 
-/** Calendar parts of an instant in Asia/Taipei. */
+/** Calendar parts of an instant in Asia/Taipei. `dow` is 0 (Sunday) – 6. */
 export function taipei(d: Date) {
   const p = new Intl.DateTimeFormat("en-CA", {
     timeZone: TZ,
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
-    weekday: "short",
     hour: "2-digit",
     minute: "2-digit",
     hourCycle: "h23",
@@ -18,7 +16,7 @@ export function taipei(d: Date) {
   const m = Number(get("month"));
   const day = Number(get("day"));
   const dow = new Date(Date.UTC(y, m - 1, day)).getUTCDay();
-  return { y, m, d: day, weekday: WEEKDAY[dow], hh: get("hour"), mm: get("minute"), ymd: `${get("year")}-${get("month")}-${get("day")}` };
+  return { y, m, d: day, dow, hh: get("hour"), mm: get("minute") };
 }
 
 /** Whole calendar days from today (Taipei) to the given instant's Taipei date. */
@@ -26,13 +24,6 @@ export function daysUntil(d: Date, now = new Date()): number {
   const a = taipei(now);
   const b = taipei(d);
   return Math.round((Date.UTC(b.y, b.m - 1, b.d) - Date.UTC(a.y, a.m - 1, a.d)) / 86_400_000);
-}
-
-export function relativeDays(n: number): string {
-  if (n === 0) return "今天";
-  if (n === 1) return "明天";
-  if (n < 0) return `${-n} 天前`;
-  return `${n} 天後`;
 }
 
 export function formatDate(d: Date, withYear = false): string {
