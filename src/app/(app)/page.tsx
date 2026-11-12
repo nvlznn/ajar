@@ -2,7 +2,7 @@ import { Inbox } from "lucide-react";
 import { DeadlineRuler } from "@/components/deadline-ruler";
 import { FilterBar } from "@/components/filter-bar";
 import { OpportunityRow } from "@/components/opportunity-row";
-import { CATEGORY_COLOR, TRACKING, type Category } from "@/lib/categories";
+import { CATEGORY_COLOR, type Category } from "@/lib/categories";
 import { daysUntil, taipei, taipeiDayStart } from "@/lib/format";
 import type { Dict } from "@/lib/i18n";
 import { getDict } from "@/lib/locale";
@@ -85,7 +85,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
             {t.home.tracking}
           </h2>
           {/* One group per stage, each row identical to the main list. */}
-          {TRACKING.map((status) => {
+          {(["preparing", "interested", "applied"] as const).map((status) => {
             const group = tracking.filter((it) => it.status === status);
             if (!group.length) return null;
             return (
