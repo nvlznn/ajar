@@ -6,7 +6,7 @@ import { CATEGORY_COLOR, type Category } from "@/lib/categories";
 import { daysUntil, taipei, taipeiDayStart } from "@/lib/format";
 import type { Dict } from "@/lib/i18n";
 import { getDict } from "@/lib/locale";
-import { SORTS, deadlinesInRange, listOpportunities, listTracking, nowBucket, type ListItem, type SortKey } from "@/lib/queries";
+import { SORTS, deadlinesInRange, listOpportunities, nowBucket, type ListItem, type SortKey } from "@/lib/queries";
 import { requireUser } from "@/lib/session";
 
 function groupByMonth(items: ListItem[], t: Dict) {
@@ -41,7 +41,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   const minFit = Number.isInteger(fitN) && fitN >= 10 && fitN <= 90 && fitN % 10 === 0 ? fitN : undefined;
 
   const now = new Date();
-  const [items, tracking, soon] = await Promise.all([
+  const [items, soon] = await Promise.all([
     listOpportunities(
       user.id,
       {
@@ -55,7 +55,6 @@ export default async function Home({ searchParams }: PageProps<"/">) {
       },
       nowBucket(now),
     ),
-    listTracking(user.id),
     deadlinesInRange(user.id, taipeiDayStart(0, now), taipeiDayStart(15, now)),
   ]);
   const soonCount = soon.filter((s) => {
@@ -78,32 +77,6 @@ export default async function Home({ searchParams }: PageProps<"/">) {
           <DeadlineRuler items={soon} t={t} now={now} />
         </div>
       </section>
-
-      {tracking.length > 0 && (
-        <section aria-labelledby="tracking" className="mt-14">
-          <h2 id="tracking" className="text-[21px] font-semibold leading-7">
-            {t.home.tracking}
-          </h2>
-          {/* One group per stage, each row identical to the main list. */}
-          {(["preparing", "interested", "applied"] as const).map((status) => {
-            const group = tracking.filter((it) => it.status === status);
-            if (!group.length) return null;
-            return (
-              <div key={status} className="mt-6">
-                <h3 className="flex items-baseline justify-between border-b border-hairline pb-2 text-[13px] font-semibold text-muted-foreground">
-                  {t.status[status]}
-                  <span className="font-normal tnum">{t.home.count(group.length)}</span>
-                </h3>
-                <ul className="divide-y divide-hairline/60">
-                  {group.map((it) => (
-                    <OpportunityRow key={it.id} it={it} t={t} now={now} showMonth hideStatus />
-                  ))}
-                </ul>
-              </div>
-            );
-          })}
-        </section>
-      )}
 
       <section aria-labelledby="all" className="mt-14">
         <div className="flex items-baseline justify-between">

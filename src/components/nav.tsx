@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
-import { CalendarDays, Settings, Sparkles, UserRound, type LucideIcon } from "lucide-react";
+import { CalendarDays, Settings, Sparkles, Star, UserRound, type LucideIcon } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import type { Dict } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -21,6 +21,7 @@ export function NavFrame({
   const links: { href: string; label: string; icon: LucideIcon }[] = labels
     ? [
         { href: "/", label: labels.opportunities, icon: Sparkles },
+        { href: "/tracking", label: labels.tracking, icon: Star },
         { href: "/calendar", label: labels.calendar, icon: CalendarDays },
         { href: "/profile", label: labels.profile, icon: UserRound },
       ]

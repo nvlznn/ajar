@@ -8,7 +8,7 @@ export const LOCALE_COOKIE = "ajar-lang";
 
 const zh = {
   htmlLang: "zh-Hant",
-  nav: { opportunities: "機會", calendar: "月曆", profile: "個人檔案", settings: "設定" },
+  nav: { opportunities: "機會", tracking: "追蹤中", calendar: "月曆", profile: "個人檔案", settings: "設定" },
   categories: {
     hackathon: "黑客松",
     exchange: "出國交換",
@@ -47,6 +47,7 @@ const zh = {
     soon: (n: number) => (n ? `${n} 個截止日。點一下圓點看是哪一個。` : "這兩週沒有截止日。"),
     rulerAria: "接下來 14 天的截止日",
     tracking: "追蹤中",
+    trackingEmpty: "還沒有追蹤任何機會。在機會列表上點每一列右側的按鈕，就能標記為有興趣或準備中。",
     all: "所有機會",
     archived: "已截止",
     count: (n: number) => `${n} 項`,
@@ -281,7 +282,7 @@ export type Dict = typeof zh;
 
 const en: Dict = {
   htmlLang: "en",
-  nav: { opportunities: "Opportunities", calendar: "Calendar", profile: "Profile", settings: "Settings" },
+  nav: { opportunities: "Opportunities", tracking: "Tracking", calendar: "Calendar", profile: "Profile", settings: "Settings" },
   categories: {
     hackathon: "Hackathon",
     exchange: "Exchange",
@@ -328,6 +329,7 @@ const en: Dict = {
       n ? `${n} deadline${n === 1 ? "" : "s"}. Select a dot to see which.` : "No deadlines in the next two weeks.",
     rulerAria: "Deadlines in the next 14 days",
     tracking: "Tracking",
+    trackingEmpty: "You're not tracking anything yet. In the opportunity list, use the button at the right of a row to mark it interested or preparing.",
     all: "All opportunities",
     archived: "Closed",
     count: (n: number) => `${n} item${n === 1 ? "" : "s"}`,
