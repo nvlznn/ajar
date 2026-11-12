@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { CategoryDot } from "@/components/category-dot";
+import { CategoryIcon } from "@/components/category-dot";
+import { Inbox, Star } from "lucide-react";
 import { DeadlineRuler } from "@/components/deadline-ruler";
 import { FilterBar } from "@/components/filter-bar";
 import { OpportunityRow } from "@/components/opportunity-row";
@@ -69,7 +70,8 @@ export default async function Home({ searchParams }: PageProps<"/">) {
 
       {tracking.length > 0 && (
         <section aria-labelledby="tracking" className="mt-14">
-          <h2 id="tracking" className="text-[21px] font-semibold leading-7">
+          <h2 id="tracking" className="flex items-center gap-2 text-[21px] font-semibold leading-7">
+            <Star aria-hidden className="size-5 text-tint" strokeWidth={2} fill="currentColor" />
             {t.home.tracking}
           </h2>
           <ul className="mt-3 divide-y divide-hairline/70 rounded-xl bg-grouped">
@@ -78,7 +80,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
               return (
                 <li key={it.id}>
                   <Link href={`/o/${it.id}`} className="flex items-center gap-3 px-4 py-2.5 text-[15px]">
-                    <CategoryDot category={it.category} />
+                    <CategoryIcon category={it.category} />
                     <span className="min-w-0 flex-1 truncate">{it.title}</span>
                     <span className="shrink-0 text-[13px] text-tint">{it.status && t.status[it.status]}</span>
                     <span
@@ -106,13 +108,16 @@ export default async function Home({ searchParams }: PageProps<"/">) {
         </div>
 
         {items.length === 0 ? (
-          <p className="mt-12 max-w-md text-[15px] text-muted-foreground">
-            {one("q") || category ? t.home.emptyFiltered : t.home.empty}
-          </p>
+          <div className="mt-12 flex max-w-md items-start gap-3 text-[15px] text-muted-foreground">
+            <Inbox aria-hidden className="mt-0.5 size-5 shrink-0" strokeWidth={1.75} />
+            <p>{one("q") || category ? t.home.emptyFiltered : t.home.empty}</p>
+          </div>
         ) : (
           groups.map((g) => (
             <div key={g.label} className="mt-8">
-              <h3 className="border-b border-hairline pb-2 text-[13px] font-semibold text-muted-foreground">{g.label}</h3>
+              <h3 className="border-b border-hairline pb-2 text-[13px] font-semibold text-muted-foreground">
+                {g.label}
+              </h3>
               <ul className="divide-y divide-hairline/60">
                 {g.items.map((it) => (
                   <OpportunityRow key={it.id} it={it} t={t} now={now} />

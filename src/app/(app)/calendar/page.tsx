@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CategoryDot } from "@/components/category-dot";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { taipei } from "@/lib/format";
 import { getDict } from "@/lib/locale";
 import { deadlinesInRange } from "@/lib/queries";
@@ -43,10 +44,28 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
     <div>
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
         <h1 className="text-[34px] font-semibold leading-10 tracking-[-0.02em]">{t.monthTitle(y, mo)}</h1>
-        <nav className="flex items-center gap-4 text-[15px] text-tint" aria-label={t.calendar.switchAria}>
-          <Link href={`/calendar?m=${py}-${pad(pm)}`}>{t.calendar.prev}</Link>
-          {!isThisMonth && <Link href="/calendar">{t.calendar.today}</Link>}
-          <Link href={`/calendar?m=${ny}-${pad(nm)}`}>{t.calendar.next}</Link>
+        <nav className="flex items-center gap-1 text-[15px] text-tint" aria-label={t.calendar.switchAria}>
+          <Link
+            href={`/calendar?m=${py}-${pad(pm)}`}
+            aria-label={t.calendar.prev}
+            title={t.calendar.prev}
+            className="inline-flex size-8 items-center justify-center rounded-full hover:bg-grouped"
+          >
+            <ChevronLeft aria-hidden className="size-5" strokeWidth={2.25} />
+          </Link>
+          {!isThisMonth && (
+            <Link href="/calendar" className="rounded-full px-3 py-1 hover:bg-grouped">
+              {t.calendar.today}
+            </Link>
+          )}
+          <Link
+            href={`/calendar?m=${ny}-${pad(nm)}`}
+            aria-label={t.calendar.next}
+            title={t.calendar.next}
+            className="inline-flex size-8 items-center justify-center rounded-full hover:bg-grouped"
+          >
+            <ChevronRight aria-hidden className="size-5" strokeWidth={2.25} />
+          </Link>
         </nav>
       </div>
       <p className="mt-1 text-[15px] text-muted-foreground">{t.calendar.count(items.length)}</p>
@@ -87,7 +106,9 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
                         </Link>
                       </li>
                     ))}
-                    {list.length > 4 && <li className="px-1 text-muted-foreground">{t.calendar.more(list.length - 4)}</li>}
+                    {list.length > 4 && (
+                      <li className="px-1 text-muted-foreground">{t.calendar.more(list.length - 4)}</li>
+                    )}
                   </ul>
                   <div className="mt-1 flex flex-wrap justify-end gap-0.5 sm:hidden">
                     {list.slice(0, 6).map((it) => (
@@ -107,7 +128,9 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
           {items.map((it) => (
             <li key={it.id}>
               <Link href={`/o/${it.id}`} className="flex items-center gap-3 py-2.5 text-[15px]">
-                <span className="w-10 shrink-0 text-muted-foreground tnum">{t.calendar.day(taipei(it.deadlineAt!).d)}</span>
+                <span className="w-10 shrink-0 text-muted-foreground tnum">
+                  {t.calendar.day(taipei(it.deadlineAt!).d)}
+                </span>
                 <CategoryDot category={it.category} />
                 <span className="truncate">{it.title}</span>
               </Link>

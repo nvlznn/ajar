@@ -123,6 +123,7 @@ export const opportunities = pgTable(
     url: text("url").notNull(),
     sourceUrl: text("source_url"),
     summary: text("summary"),
+    summaryEn: text("summary_en"),
     locationMode: text("location_mode"), // online | onsite | hybrid
     country: text("country"),
     city: text("city"),
@@ -174,6 +175,7 @@ export const scores = pgTable(
     eligibility: text("eligibility").notNull(), // eligible | maybe | ineligible
     score: integer("score").notNull(),
     reason: text("reason"),
+    reasonEn: text("reason_en"),
     profileVersion: integer("profile_version"),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },

@@ -49,6 +49,7 @@ export const opportunityInput = z.object({
   url: z.string().url(),
   source_url: z.string().nullish(),
   summary: z.string().nullish(),
+  summary_en: z.string().nullish(),
   location: z
     .object({
       mode: z.enum(["online", "onsite", "hybrid"]).nullish(),
@@ -85,6 +86,7 @@ export const opportunityInput = z.object({
       eligibility: z.enum(["eligible", "maybe", "ineligible"]),
       score: z.number().min(0).max(100),
       reason: z.string().nullish(),
+      reason_en: z.string().nullish(),
     })
     .nullish(),
 });

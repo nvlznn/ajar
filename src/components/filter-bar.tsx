@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
+import { Search } from "lucide-react";
 import type { Dict } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -56,19 +57,26 @@ export function FilterBar({ labels, categories }: { labels: Dict["filters"]; cat
 
   return (
     <div className={cn("flex flex-wrap items-center gap-2 transition-opacity", pending && "opacity-60")}>
-      <input
-        type="search"
-        defaultValue={params.get("q") ?? ""}
-        placeholder={labels.search}
-        aria-label={labels.searchAria}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") set("q", e.currentTarget.value.trim() || null);
-        }}
-        onBlur={(e) => {
-          if ((params.get("q") ?? "") !== e.currentTarget.value.trim()) set("q", e.currentTarget.value.trim() || null);
-        }}
-        className="h-8 w-full rounded-lg bg-grouped px-3 text-[13px] placeholder:text-muted-foreground sm:w-56"
-      />
+      <div className="relative w-full sm:w-56">
+        <Search
+          aria-hidden
+          className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground"
+        />
+        <input
+          type="search"
+          defaultValue={params.get("q") ?? ""}
+          placeholder={labels.search}
+          aria-label={labels.searchAria}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") set("q", e.currentTarget.value.trim() || null);
+          }}
+          onBlur={(e) => {
+            if ((params.get("q") ?? "") !== e.currentTarget.value.trim())
+              set("q", e.currentTarget.value.trim() || null);
+          }}
+          className="h-8 w-full rounded-lg bg-grouped pl-8 pr-3 text-[13px] placeholder:text-muted-foreground"
+        />
+      </div>
       <select
         aria-label={labels.category}
         value={params.get("category") ?? ""}

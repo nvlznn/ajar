@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
+import { CalendarDays, Settings, Sparkles, UserRound, type LucideIcon } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import type { Dict } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -17,15 +18,18 @@ export function NavFrame({
   labels?: Labels;
   isActive?: (href: string) => boolean;
 }) {
-  const links = labels
+  const links: { href: string; label: string; icon: LucideIcon }[] = labels
     ? [
-        { href: "/", label: labels.opportunities },
-        { href: "/calendar", label: labels.calendar },
-        { href: "/profile", label: labels.profile },
+        { href: "/", label: labels.opportunities, icon: Sparkles },
+        { href: "/calendar", label: labels.calendar, icon: CalendarDays },
+        { href: "/profile", label: labels.profile, icon: UserRound },
       ]
     : [];
   const linkClass = (href: string) =>
-    cn("transition-colors", isActive(href) ? "text-foreground" : "text-muted-foreground hover:text-foreground");
+    cn(
+      "inline-flex items-center gap-1.5 transition-colors",
+      isActive(href) ? "text-foreground" : "text-muted-foreground hover:text-foreground",
+    );
 
   return (
     <header className="sticky top-0 z-40 border-b border-hairline/70 bg-background/80 backdrop-blur-xl backdrop-saturate-150">
@@ -34,17 +38,26 @@ export function NavFrame({
           Ajar
         </Link>
         {links.map((l) => (
-          <Link key={l.href} href={l.href} aria-current={isActive(l.href) ? "page" : undefined} className={linkClass(l.href)}>
-            {l.label}
+          <Link
+            key={l.href}
+            href={l.href}
+            aria-current={isActive(l.href) ? "page" : undefined}
+            aria-label={l.label}
+            className={linkClass(l.href)}
+          >
+            <l.icon aria-hidden className="size-4" strokeWidth={1.9} />
+            <span className="max-sm:sr-only">{l.label}</span>
           </Link>
         ))}
         {labels && (
           <Link
             href="/settings"
             aria-current={isActive("/settings") ? "page" : undefined}
+            aria-label={labels.settings}
             className={cn("ml-auto", linkClass("/settings"))}
           >
-            {labels.settings}
+            <Settings aria-hidden className="size-4" strokeWidth={1.9} />
+            <span className="max-sm:sr-only">{labels.settings}</span>
           </Link>
         )}
       </nav>

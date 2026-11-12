@@ -1,12 +1,14 @@
 "use client";
 
 import { useOptimistic, useTransition } from "react";
+import { PencilLine, Send, Star, type LucideIcon } from "lucide-react";
 import { setStatus } from "@/app/actions";
 import type { TrackingStatus } from "@/lib/categories";
 import type { Dict } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 const PRIMARY: TrackingStatus[] = ["interested", "preparing", "applied"];
+const ICON: Partial<Record<TrackingStatus, LucideIcon>> = { interested: Star, preparing: PencilLine, applied: Send };
 const OUTCOME: TrackingStatus[] = ["accepted", "rejected", "skipped"];
 
 export function StatusControl({
@@ -30,21 +32,30 @@ export function StatusControl({
   return (
     <div className="flex flex-wrap items-center gap-2">
       <div role="radiogroup" aria-label={labels.aria} className="inline-flex h-9 rounded-full bg-grouped p-0.5">
-        {PRIMARY.map((s) => (
-          <button
-            key={s}
-            type="button"
-            role="radio"
-            aria-checked={optimistic === s}
-            onClick={() => choose(optimistic === s ? null : s)}
-            className={cn(
-              "rounded-full px-4 text-[13px] transition-colors",
-              optimistic === s ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {labels[s]}
-          </button>
-        ))}
+        {PRIMARY.map((s) => {
+          const Icon = ICON[s]!;
+          return (
+            <button
+              key={s}
+              type="button"
+              role="radio"
+              aria-checked={optimistic === s}
+              onClick={() => choose(optimistic === s ? null : s)}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full px-3.5 text-[13px] transition-colors",
+                optimistic === s ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <Icon
+                aria-hidden
+                className="size-3.5"
+                strokeWidth={2}
+                fill={s === "interested" && optimistic === s ? "currentColor" : "none"}
+              />
+              {labels[s]}
+            </button>
+          );
+        })}
       </div>
       <select
         aria-label={labels.outcome}

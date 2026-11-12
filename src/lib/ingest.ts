@@ -53,7 +53,23 @@ function stableStringify(v: unknown): string {
   return JSON.stringify(v);
 }
 
-const normTitle = (t: string) => t.toLowerCase().replace(/[\s\p{P}\p{S}]+/gu, "");
+/**
+ * "Found on" links are shown to people, so drop machine endpoints agents sometimes record
+ * (e.g. devpost.com/api/hackathons?... returns JSON, not a page).
+ */
+export function humanPage(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  try {
+    const u = new URL(raw.trim());
+    if (u.protocol !== "https:" && u.protocol !== "http:") return null;
+    if (/(^|\/)api(\/|$)|\.(json|xml|rss|atom)$/i.test(u.pathname)) return null;
+    return u.toString();
+  } catch {
+    return null;
+  }
+}
+
+const normTitle =(t: string) => t.toLowerCase().replace(/[\s\p{P}\p{S}]+/gu, "");
 
 /** Same opportunity if one normalized title contains the other (tolerates small edits/suffixes). */
 export function sameTitle(a: string, b: string): boolean {
@@ -74,6 +90,7 @@ const COMPARED: (keyof Row)[] = [
   "url",
   "sourceUrl",
   "summary",
+  "summaryEn",
   "locationMode",
   "country",
   "city",
@@ -106,8 +123,9 @@ function toRow(item: OpportunityInput, key: string, parentId: string | null): Ro
     category: item.category,
     organizer: item.organizer ?? null,
     url: item.url,
-    sourceUrl: item.source_url ?? null,
+    sourceUrl: humanPage(item.source_url),
     summary: item.summary ?? null,
+    summaryEn: item.summary_en ?? null,
     locationMode: item.location?.mode ?? null,
     country: item.location?.country?.toUpperCase() ?? null,
     city: item.location?.city ?? null,
@@ -216,6 +234,7 @@ export async function ingest(rawItems: unknown[], source: string): Promise<Inges
           eligibility: item.fit.eligibility,
           score: Math.round(item.fit.score),
           reason: item.fit.reason ?? null,
+          reasonEn: item.fit.reason_en ?? null,
         };
         await db
           .insert(scores)
