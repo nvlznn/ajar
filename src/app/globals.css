@@ -1,0 +1,167 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/* Dark mode follows the system setting. */
+@custom-variant dark (@media (prefers-color-scheme: dark));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "PingFang TC",
+    "Noto Sans TC", "Helvetica Neue", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+  --font-heading: var(--font-sans);
+
+  --color-grouped: var(--grouped);
+  --color-hairline: var(--hairline);
+  --color-tint: var(--tint);
+  --color-urgent: var(--urgent);
+
+  --color-cat-blue: var(--cat-blue);
+  --color-cat-green: var(--cat-green);
+  --color-cat-orange: var(--cat-orange);
+  --color-cat-purple: var(--cat-purple);
+  --color-cat-red: var(--cat-red);
+  --color-cat-yellow: var(--cat-yellow);
+  --color-cat-brown: var(--cat-brown);
+  --color-cat-pink: var(--cat-pink);
+  --color-cat-teal: var(--cat-teal);
+  --color-cat-indigo: var(--cat-indigo);
+  --color-cat-gray: var(--cat-gray);
+
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-3xl: 24px;
+  --radius-4xl: 28px;
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: #1d1d1f;
+  --grouped: #f5f5f7;
+  --hairline: #d2d2d7;
+  --tint: #0071e3;
+  --urgent: #d70015;
+
+  --card: #ffffff;
+  --card-foreground: #1d1d1f;
+  --popover: #ffffff;
+  --popover-foreground: #1d1d1f;
+  --primary: #0071e3;
+  --primary-foreground: #ffffff;
+  --secondary: #f5f5f7;
+  --secondary-foreground: #1d1d1f;
+  --muted: #f5f5f7;
+  --muted-foreground: #6e6e73;
+  --accent: #f5f5f7;
+  --accent-foreground: #1d1d1f;
+  --destructive: #d70015;
+  --border: #d2d2d7;
+  --input: #d2d2d7;
+  --ring: #0071e3;
+  --radius: 12px;
+
+  --cat-blue: #007aff;
+  --cat-green: #28a745;
+  --cat-orange: #ff9500;
+  --cat-purple: #af52de;
+  --cat-red: #ff3b30;
+  --cat-yellow: #ffcc00;
+  --cat-brown: #a2845e;
+  --cat-pink: #ff2d55;
+  --cat-teal: #30b0c7;
+  --cat-indigo: #5856d6;
+  --cat-gray: #8e8e93;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #000000;
+    --foreground: #f5f5f7;
+    --grouped: #1c1c1e;
+    --hairline: #38383a;
+    --tint: #2997ff;
+    --urgent: #ff453a;
+
+    --card: #1c1c1e;
+    --card-foreground: #f5f5f7;
+    --popover: #2c2c2e;
+    --popover-foreground: #f5f5f7;
+    --primary: #2997ff;
+    --primary-foreground: #000000;
+    --secondary: #2c2c2e;
+    --secondary-foreground: #f5f5f7;
+    --muted: #1c1c1e;
+    --muted-foreground: #98989d;
+    --accent: #2c2c2e;
+    --accent-foreground: #f5f5f7;
+    --destructive: #ff453a;
+    --border: #38383a;
+    --input: #38383a;
+    --ring: #2997ff;
+
+    --cat-blue: #0a84ff;
+    --cat-green: #30d158;
+    --cat-orange: #ff9f0a;
+    --cat-purple: #bf5af2;
+    --cat-red: #ff453a;
+    --cat-yellow: #ffd60a;
+    --cat-brown: #ac8e68;
+    --cat-pink: #ff375f;
+    --cat-teal: #40c8e0;
+    --cat-indigo: #5e5ce6;
+    --cat-gray: #98989d;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  :focus-visible {
+    outline: 1px solid var(--tint);
+    outline-offset: 2px;
+  }
+  html {
+    @apply font-sans;
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: "tnum" 0;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-size: 15px;
+    line-height: 22px;
+    letter-spacing: -0.01em;
+  }
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}

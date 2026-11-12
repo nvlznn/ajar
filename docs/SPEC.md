@@ -35,6 +35,7 @@ Ajar collects every opportunity a student can join or apply for (hackathons, exc
 
 ## Web app
 - Next.js (App Router) + Tailwind + shadcn/ui on Vercel.
+- **Visual design: Apple-like, minimalistic** (supersedes the earlier Notion reference). Clean and neat. **No glow** — no glowing shadows, colored shadows, gradient halos, or neon accents. Tokens and layout in [DESIGN.md](DESIGN.md).
 - Auth: Better Auth + Google OAuth; allowlist `nxzvnn@gmail.com`; whole site private.
 - UI in Traditional Chinese; titles kept in original language.
 - Home: "due within 14 days" + "tracking" on top, deadline-sorted table below (cards on mobile), calendar tab.

@@ -1,0 +1,57 @@
+"use client";
+
+import { useOptimistic, useTransition } from "react";
+import { setStatus } from "@/app/actions";
+import { STATUS_LABEL, type TrackingStatus } from "@/lib/categories";
+import { cn } from "@/lib/utils";
+
+const PRIMARY: TrackingStatus[] = ["interested", "preparing", "applied"];
+const OUTCOME: TrackingStatus[] = ["accepted", "rejected", "skipped"];
+
+export function StatusControl({ opportunityId, status }: { opportunityId: string; status: TrackingStatus | null }) {
+  const [optimistic, setOptimistic] = useOptimistic(status);
+  const [, start] = useTransition();
+
+  const choose = (next: TrackingStatus | null) =>
+    start(async () => {
+      setOptimistic(next);
+      await setStatus(opportunityId, next);
+    });
+
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <div role="radiogroup" aria-label="追蹤狀態" className="inline-flex h-9 rounded-full bg-grouped p-0.5">
+        {PRIMARY.map((s) => (
+          <button
+            key={s}
+            type="button"
+            role="radio"
+            aria-checked={optimistic === s}
+            onClick={() => choose(optimistic === s ? null : s)}
+            className={cn(
+              "rounded-full px-4 text-[13px] transition-colors",
+              optimistic === s
+                ? "bg-foreground text-background"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {STATUS_LABEL[s]}
+          </button>
+        ))}
+      </div>
+      <select
+        aria-label="結果"
+        value={optimistic && OUTCOME.includes(optimistic) ? optimistic : ""}
+        onChange={(e) => choose((e.target.value || null) as TrackingStatus | null)}
+        className="h-9 rounded-full bg-grouped px-3.5 text-[13px] text-muted-foreground"
+      >
+        <option value="">結果</option>
+        {OUTCOME.map((s) => (
+          <option key={s} value={s}>
+            {STATUS_LABEL[s]}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
