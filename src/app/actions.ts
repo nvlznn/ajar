@@ -1,7 +1,7 @@
 "use server";
 
 import { and, eq, sql } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
+import { refresh, updateTag } from "next/cache";
 import { cookies } from "next/headers";
 import { LOCALE_COOKIE, isLocale, type Locale } from "@/lib/i18n";
 import { db } from "@/db";
@@ -26,14 +26,14 @@ export async function setStatus(opportunityId: string, status: TrackingStatus | 
         set: { status, updatedAt: sql`now()` },
       });
   }
-  revalidatePath("/", "layout");
+  updateTag(`user:${u.id}`);
 }
 
 export async function setLocale(locale: Locale) {
   await requireUser();
   if (!isLocale(locale)) throw new Error("invalid locale");
   (await cookies()).set(LOCALE_COOKIE, locale, { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" });
-  revalidatePath("/", "layout");
+  refresh();
 }
 
 export async function setRegionMode(mode: "focus" | "all") {
@@ -42,9 +42,8 @@ export async function setRegionMode(mode: "focus" | "all") {
     .insert(userSettings)
     .values({ userId: u.id, regionMode: mode })
     .onConflictDoUpdate({ target: userSettings.userId, set: { regionMode: mode } });
-  revalidatePath("/", "layout");
+  updateTag(`user:${u.id}`);
 }
-
 
 export async function saveProfile(formData: FormData) {
   const u = await requireUser();
@@ -61,5 +60,5 @@ export async function saveProfile(formData: FormData) {
       target: profiles.userId,
       set: { fields, markdown, version: sql`${profiles.version} + 1`, updatedAt: sql`now()` },
     });
-  revalidatePath("/profile");
+  updateTag(`profile:${u.id}`);
 }

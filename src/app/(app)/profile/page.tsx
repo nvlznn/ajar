@@ -1,20 +1,17 @@
-import { eq } from "drizzle-orm";
 import { saveProfile } from "@/app/actions";
 import { SubmitButton } from "@/components/submit-button";
-import { db } from "@/db";
-import { profiles } from "@/db/schema";
 import { formatDate } from "@/lib/format";
 import { getDict } from "@/lib/locale";
 import { PROFILE_FIELDS } from "@/lib/profile-fields";
+import { getProfile } from "@/lib/queries";
 import { requireUser } from "@/lib/session";
 
 export const metadata = { title: "Profile" };
 
 export default async function ProfilePage() {
-  const user = await requireUser();
-  const { t } = await getDict();
+  const [user, { t }] = await Promise.all([requireUser(), getDict()]);
   const L = t.profile;
-  const [p] = await db.select().from(profiles).where(eq(profiles.userId, user.id));
+  const p = await getProfile(user.id);
   const fields = p?.fields ?? {};
 
   return (

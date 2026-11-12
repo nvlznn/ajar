@@ -28,8 +28,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 }
 
 export default async function SettingsPage() {
-  const user = await requireUser();
-  const { t, locale } = await getDict();
+  const [user, { t, locale }] = await Promise.all([requireUser(), getDict()]);
   const L = t.settings;
   const { regionMode } = await getSettings(user.id);
 

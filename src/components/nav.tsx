@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect } from "react";
+import { authClient } from "@/lib/auth-client";
 import type { Dict } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -50,8 +52,25 @@ export function NavFrame({
   );
 }
 
+/** Count of pages viewed in this tab's session; > 1 means "back" stays inside the app. */
+export const IN_APP_NAV_KEY = "ajar-in-app-nav";
+
 export function Nav({ labels }: { labels: Labels }) {
   const pathname = usePathname();
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(IN_APP_NAV_KEY, String(Number(sessionStorage.getItem(IN_APP_NAV_KEY) ?? 0) + 1));
+    } catch {}
+  }, [pathname]);
+
+  // Server Components can't write cookies, so keep Better Auth's session cookie-cache warm from here
+  // (a Route Handler call refreshes it). Without this, pages fall back to a DB lookup per request.
+  useEffect(() => {
+    const refresh = () => authClient.getSession().catch(() => {});
+    refresh();
+    const id = setInterval(refresh, 4 * 60 * 1000);
+    return () => clearInterval(id);
+  }, []);
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" || pathname.startsWith("/o/") : pathname.startsWith(href);
   return <NavFrame labels={labels} isActive={isActive} />;

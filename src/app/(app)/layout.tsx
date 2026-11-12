@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { Nav, NavFrame } from "@/components/nav";
+import { ListSkeleton } from "@/components/skeleton";
 import { getDict } from "@/lib/locale";
 
 async function LocalizedNav() {
@@ -15,7 +16,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </Suspense>
       {/* Each page calls requireUser() itself, inside this boundary. */}
       <main className="mx-auto w-full max-w-[980px] px-4 pb-24 pt-10 sm:px-6">
-        <Suspense fallback={<div className="min-h-[60dvh]" aria-busy />}>{children}</Suspense>
+        <Suspense fallback={<ListSkeleton />}>{children}</Suspense>
       </main>
     </>
   );

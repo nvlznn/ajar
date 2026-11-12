@@ -11,9 +11,7 @@ export const metadata = { title: "Calendar" };
 const pad = (n: number) => String(n).padStart(2, "0");
 
 export default async function CalendarPage({ searchParams }: PageProps<"/calendar">) {
-  const user = await requireUser();
-  const { t } = await getDict();
-  const sp = await searchParams;
+  const [user, { t }, sp] = await Promise.all([requireUser(), getDict(), searchParams]);
   const today = taipei(new Date());
   const m = typeof sp.m === "string" && /^\d{4}-\d{2}$/.test(sp.m) ? sp.m : `${today.y}-${pad(today.m)}`;
   const [y, mo] = m.split("-").map(Number);
@@ -25,7 +23,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
   const py = mo === 1 ? y - 1 : y;
   const pm = mo === 1 ? 12 : mo - 1;
 
-  const items = await deadlinesInRange(user.id, start, end);
+  const items = await deadlinesInRange(user.id, start.toISOString(), end.toISOString());
   const byDay = new Map<number, typeof items>();
   for (const it of items) {
     const d = taipei(it.deadlineAt!).d;

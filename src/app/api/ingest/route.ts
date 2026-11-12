@@ -1,4 +1,5 @@
 import { timingSafeEqual } from "node:crypto";
+import { revalidateTag } from "next/cache";
 import { NextResponse, type NextRequest } from "next/server";
 import { asc } from "drizzle-orm";
 import { db } from "@/db";
@@ -22,7 +23,10 @@ export async function POST(req: NextRequest) {
   if (body.items.length > 500) {
     return NextResponse.json({ error: "max 500 items per request" }, { status: 413 });
   }
-  return NextResponse.json(await ingest(body.items, body.source));
+  const result = await ingest(body.items, body.source);
+  // Route Handlers can't use updateTag; expire immediately so the next view reads fresh data.
+  if (result.created || result.updated) revalidateTag("opportunities", { expire: 0 });
+  return NextResponse.json(result);
 }
 
 /** Lightweight index of what's already stored — lets agents dedupe and pick items to re-verify. */

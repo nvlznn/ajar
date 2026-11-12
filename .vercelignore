@@ -1,0 +1,4 @@
+# Never upload personal data or local secrets (env vars come from the Vercel project).
+private
+.env*
+.claude

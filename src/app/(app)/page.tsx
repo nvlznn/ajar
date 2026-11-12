@@ -4,10 +4,10 @@ import { DeadlineRuler } from "@/components/deadline-ruler";
 import { FilterBar } from "@/components/filter-bar";
 import { OpportunityRow } from "@/components/opportunity-row";
 import { CATEGORY_COLOR, type Category } from "@/lib/categories";
-import { daysUntil, taipei } from "@/lib/format";
+import { daysUntil, taipei, taipeiDayStart } from "@/lib/format";
 import type { Dict } from "@/lib/i18n";
 import { getDict } from "@/lib/locale";
-import { deadlinesInRange, getSettings, listOpportunities, listTracking, type ListItem } from "@/lib/queries";
+import { deadlinesInRange, listOpportunities, listTracking, nowBucket, type ListItem } from "@/lib/queries";
 import { requireUser } from "@/lib/session";
 
 function groupByMonth(items: ListItem[], t: Dict) {
@@ -28,25 +28,25 @@ function groupByMonth(items: ListItem[], t: Dict) {
 }
 
 export default async function Home({ searchParams }: PageProps<"/">) {
-  const user = await requireUser();
-  const { t } = await getDict();
-  const sp = await searchParams;
+  const [user, { t }, sp] = await Promise.all([requireUser(), getDict(), searchParams]);
   const one = (k: string) => (typeof sp[k] === "string" ? (sp[k] as string) : undefined);
   const view = one("view");
   const category = one("category");
 
   const now = new Date();
-  const { regionMode } = await getSettings(user.id);
   const [items, tracking, soon] = await Promise.all([
-    listOpportunities(user.id, {
-      q: one("q"),
-      category: category && category in CATEGORY_COLOR ? (category as Category) : undefined,
-      showIneligible: view === "ineligible",
-      showArchived: view === "archived",
-      regionMode,
-    }),
+    listOpportunities(
+      user.id,
+      {
+        q: one("q"),
+        category: category && category in CATEGORY_COLOR ? (category as Category) : undefined,
+        showIneligible: view === "ineligible",
+        showArchived: view === "archived",
+      },
+      nowBucket(now),
+    ),
     listTracking(user.id),
-    deadlinesInRange(user.id, new Date(now.getTime() - 86_400_000), new Date(now.getTime() + 16 * 86_400_000)),
+    deadlinesInRange(user.id, taipeiDayStart(0, now), taipeiDayStart(15, now)),
   ]);
   const soonCount = soon.filter((s) => {
     if (!s.deadlineAt) return false;

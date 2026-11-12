@@ -26,6 +26,12 @@ export function daysUntil(d: Date, now = new Date()): number {
   return Math.round((Date.UTC(b.y, b.m - 1, b.d) - Date.UTC(a.y, a.m - 1, a.d)) / 86_400_000);
 }
 
+/** ISO instant of 00:00 Asia/Taipei, `offset` days from today. Stable all day → good cache key. */
+export function taipeiDayStart(offset = 0, now = new Date()): string {
+  const t = taipei(now);
+  return new Date(Date.UTC(t.y, t.m - 1, t.d + offset) - 8 * 3_600_000).toISOString();
+}
+
 export function formatDate(d: Date, withYear = false): string {
   const t = taipei(d);
   return withYear ? `${t.y}/${t.m}/${t.d}` : `${t.m}/${t.d}`;

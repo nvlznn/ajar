@@ -1,8 +1,23 @@
 import "server-only";
 import { and, asc, desc, eq, gte, ilike, inArray, isNull, lt, ne, or, sql, type SQL } from "drizzle-orm";
+import { cacheLife, cacheTag } from "next/cache";
 import { db } from "@/db";
-import { opportunities, scores, userSettings, userStatus } from "@/db/schema";
+import { opportunities, opportunityRevisions, profiles, scores, userSettings, userStatus } from "@/db/schema";
 import { TRACKING, type Category } from "@/lib/categories";
+
+/**
+ * Data access, cached with `use cache`.
+ * Tags: "opportunities" (shared data; busted by /api/ingest), `user:<id>` (status/settings/scores),
+ * `profile:<id>`. Lists also expire on their own within minutes so writes made outside Next
+ * (e.g. scripts/ingest-file) show up without a deploy.
+ */
+const userTag = (id: string) => `user:${id}`;
+const LIST_LIFE = { stale: 60, revalidate: 300, expire: 3600 };
+
+/** Round "now" to 5 minutes so cached lists keyed on it are reused. */
+export function nowBucket(d = new Date()): string {
+  return new Date(Math.floor(d.getTime() / 300_000) * 300_000).toISOString();
+}
 
 export type RegionMode = "focus" | "all";
 
@@ -13,10 +28,12 @@ export type ListFilters = {
   showIneligible?: boolean;
   /** default: hide past deadlines */
   showArchived?: boolean;
-  regionMode: RegionMode;
 };
 
 export async function getSettings(userId: string) {
+  "use cache";
+  cacheTag(userTag(userId));
+  cacheLife("max");
   const [s] = await db.select().from(userSettings).where(eq(userSettings.userId, userId));
   return { regionMode: (s?.regionMode ?? "focus") as RegionMode };
 }
@@ -31,13 +48,18 @@ const focusRegion = or(
   inArray(opportunities.category, ["exchange", "program", "scholarship", "lab"]),
 )!;
 
-export async function listOpportunities(userId: string, f: ListFilters) {
-  const now = new Date();
+export async function listOpportunities(userId: string, f: ListFilters, now: string) {
+  "use cache";
+  cacheTag("opportunities", userTag(userId));
+  cacheLife(LIST_LIFE);
+
+  const at = new Date(now);
   const where: SQL[] = [isNull(opportunities.parentId)];
-  if (!f.showArchived) where.push(or(isNull(opportunities.deadlineAt), gte(opportunities.deadlineAt, now))!);
-  else where.push(lt(opportunities.deadlineAt, now));
+  if (!f.showArchived) where.push(or(isNull(opportunities.deadlineAt), gte(opportunities.deadlineAt, at))!);
+  else where.push(lt(opportunities.deadlineAt, at));
   if (!f.showIneligible) where.push(or(isNull(scores.eligibility), ne(scores.eligibility, "ineligible"))!);
-  if (f.regionMode === "focus") where.push(focusRegion);
+  // Region scope comes from the user's settings in the same query, so callers don't wait on it first.
+  where.push(or(sql`coalesce(${userSettings.regionMode}, 'focus') = 'all'`, focusRegion)!);
   if (f.category) where.push(eq(opportunities.category, f.category));
   if (f.q) {
     const like = `%${f.q}%`;
@@ -63,6 +85,7 @@ export async function listOpportunities(userId: string, f: ListFilters) {
       status: userStatus.status,
     })
     .from(opportunities)
+    .leftJoin(userSettings, eq(userSettings.userId, userId))
     .leftJoin(scores, and(eq(scores.opportunityId, opportunities.id), eq(scores.userId, userId)))
     .leftJoin(userStatus, and(eq(userStatus.opportunityId, opportunities.id), eq(userStatus.userId, userId)))
     .where(and(...where))
@@ -73,6 +96,9 @@ export async function listOpportunities(userId: string, f: ListFilters) {
 export type ListItem = Awaited<ReturnType<typeof listOpportunities>>[number];
 
 export async function listTracking(userId: string) {
+  "use cache";
+  cacheTag("opportunities", userTag(userId));
+  cacheLife(LIST_LIFE);
   return db
     .select({
       id: opportunities.id,
@@ -88,7 +114,11 @@ export async function listTracking(userId: string) {
     .orderBy(sql`${opportunities.deadlineAt} asc nulls last`);
 }
 
-export async function deadlinesInRange(userId: string, from: Date, to: Date) {
+/** Deadlines in [from, to). Pass bucketed/day-aligned ISO strings so the cache key is stable. */
+export async function deadlinesInRange(userId: string, from: string, to: string) {
+  "use cache";
+  cacheTag("opportunities", userTag(userId));
+  cacheLife(LIST_LIFE);
   return db
     .select({
       id: opportunities.id,
@@ -105,11 +135,50 @@ export async function deadlinesInRange(userId: string, from: Date, to: Date) {
     .where(
       and(
         isNull(opportunities.parentId),
-        gte(opportunities.deadlineAt, from),
-        lt(opportunities.deadlineAt, to),
+        gte(opportunities.deadlineAt, new Date(from)),
+        lt(opportunities.deadlineAt, new Date(to)),
         or(isNull(scores.eligibility), ne(scores.eligibility, "ineligible")),
         or(isNull(userStatus.status), ne(userStatus.status, "skipped")),
       ),
     )
     .orderBy(asc(opportunities.deadlineAt));
+}
+
+/** Everything the detail page needs; independent queries run in parallel. */
+export async function getOpportunity(id: string, userId: string) {
+  "use cache";
+  cacheTag("opportunities", `opp:${id}`, userTag(userId));
+  cacheLife(LIST_LIFE);
+
+  const [[row], children, revisions] = await Promise.all([
+    db
+      .select({ o: opportunities, s: scores, st: userStatus })
+      .from(opportunities)
+      .leftJoin(scores, and(eq(scores.opportunityId, opportunities.id), eq(scores.userId, userId)))
+      .leftJoin(userStatus, and(eq(userStatus.opportunityId, opportunities.id), eq(userStatus.userId, userId)))
+      .where(eq(opportunities.id, id)),
+    db.select().from(opportunities).where(eq(opportunities.parentId, id)).orderBy(asc(opportunities.title)),
+    db
+      .select()
+      .from(opportunityRevisions)
+      .where(eq(opportunityRevisions.opportunityId, id))
+      .orderBy(desc(opportunityRevisions.createdAt))
+      .limit(10),
+  ]);
+  if (!row) return null;
+  const [parent] = row.o.parentId
+    ? await db
+        .select({ id: opportunities.id, title: opportunities.title })
+        .from(opportunities)
+        .where(eq(opportunities.id, row.o.parentId))
+    : [];
+  return { ...row, children, revisions, parent: parent ?? null };
+}
+
+export async function getProfile(userId: string) {
+  "use cache";
+  cacheTag(`profile:${userId}`);
+  cacheLife("max");
+  const [p] = await db.select().from(profiles).where(eq(profiles.userId, userId));
+  return p ?? null;
 }

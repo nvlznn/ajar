@@ -1,13 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { and, asc, desc, eq } from "drizzle-orm";
+import { BackButton } from "@/components/back-button";
 import { CategoryLabel } from "@/components/category-dot";
 import { StatusControl } from "@/components/status-control";
-import { db } from "@/db";
-import { opportunities, opportunityRevisions, scores, userStatus } from "@/db/schema";
 import { daysUntil, formatDate, formatStageDate } from "@/lib/format";
 import type { Dict } from "@/lib/i18n";
 import { getDict } from "@/lib/locale";
+import { getOpportunity } from "@/lib/queries";
 import { requireUser } from "@/lib/session";
 
 function Group({ title, children }: { title: string; children: React.ReactNode }) {
@@ -29,33 +28,13 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 }
 
 export default async function OpportunityPage({ params }: PageProps<"/o/[id]">) {
-  const user = await requireUser();
-  const { t } = await getDict();
-  const { id } = await params;
+  const [user, { t }, { id }] = await Promise.all([requireUser(), getDict(), params]);
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
 
-  const [row] = await db
-    .select({ o: opportunities, s: scores, st: userStatus })
-    .from(opportunities)
-    .leftJoin(scores, and(eq(scores.opportunityId, opportunities.id), eq(scores.userId, user.id)))
-    .leftJoin(userStatus, and(eq(userStatus.opportunityId, opportunities.id), eq(userStatus.userId, user.id)))
-    .where(eq(opportunities.id, id));
-  if (!row) notFound();
-  const { o, s, st } = row;
+  const data = await getOpportunity(id, user.id);
+  if (!data) notFound();
+  const { o, s, st, children, revisions, parent } = data;
   const L = t.detail;
-
-  const [children, revisions, parent] = await Promise.all([
-    db.select().from(opportunities).where(eq(opportunities.parentId, o.id)).orderBy(asc(opportunities.title)),
-    db
-      .select()
-      .from(opportunityRevisions)
-      .where(eq(opportunityRevisions.opportunityId, o.id))
-      .orderBy(desc(opportunityRevisions.createdAt))
-      .limit(10),
-    o.parentId
-      ? db.select({ id: opportunities.id, title: opportunities.title }).from(opportunities).where(eq(opportunities.id, o.parentId))
-      : Promise.resolve([]),
-  ]);
 
   const days = o.deadlineAt ? daysUntil(o.deadlineAt) : null;
   const elig = o.eligibility;
@@ -71,9 +50,7 @@ export default async function OpportunityPage({ params }: PageProps<"/o/[id]">) 
 
   return (
     <article className="max-w-[720px]">
-      <Link href={parent[0] ? `/o/${parent[0].id}` : "/"} className="text-[13px] text-tint hover:underline">
-        {parent[0] ? parent[0].title : L.back}
-      </Link>
+      <BackButton href={parent ? `/o/${parent.id}` : "/"} label={parent ? parent.title : L.back} />
 
       <div className="mt-6 text-[13px] text-muted-foreground">
         <CategoryLabel category={o.category} label={t.categories[o.category]} />

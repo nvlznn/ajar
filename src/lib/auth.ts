@@ -25,6 +25,8 @@ export const auth = betterAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
     },
   },
+  // Signed session snapshot in a cookie: getSession() skips the DB for 5 minutes at a time.
+  session: { cookieCache: { enabled: true, maxAge: 5 * 60 } },
   // The owner user row is seeded before first login; link the Google account to it.
   account: { accountLinking: { enabled: true, trustedProviders: ["google"] } },
   databaseHooks: {
