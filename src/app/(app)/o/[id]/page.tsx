@@ -3,17 +3,12 @@ import { notFound } from "next/navigation";
 import {
   ArrowUpRight,
   BadgeCheck,
-  CalendarDays,
   ChevronRight,
   Clock,
-  Coins,
   FileText,
   Globe,
-  History,
   Hourglass,
-  Layers,
   Link2,
-  ListChecks,
   MapPin,
   Repeat,
   TriangleAlert,
@@ -29,13 +24,10 @@ import { getDict } from "@/lib/locale";
 import { getOpportunity } from "@/lib/queries";
 import { requireUser } from "@/lib/session";
 
-function Group({ title, icon: Icon, children }: { title: string; icon: LucideIcon; children: React.ReactNode }) {
+function Group({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="mt-10">
-      <h2 className="flex items-center gap-2 text-[21px] font-semibold leading-7">
-        <Icon aria-hidden className="size-5 text-muted-foreground" strokeWidth={1.9} />
-        {title}
-      </h2>
+      <h2 className="text-[21px] font-semibold leading-7">{title}</h2>
       <div className="mt-3 divide-y divide-hairline/70 rounded-xl bg-grouped">{children}</div>
     </section>
   );
@@ -140,7 +132,7 @@ export default async function OpportunityPage({ params }: PageProps<"/o/[id]">) 
       {summary && <p className="mt-10 text-[17px] leading-7">{summary}</p>}
 
       {o.stages.length > 0 && (
-        <Group title={L.timeline} icon={CalendarDays}>
+        <Group title={L.timeline}>
           {o.stages.map((stage, i) => (
             <Row key={i} label={stage.label}>
               <span className="tnum">
@@ -154,7 +146,7 @@ export default async function OpportunityPage({ params }: PageProps<"/o/[id]">) 
       )}
 
       {(elig?.text || teamSize || elig?.nationality) && (
-        <Group title={L.eligibility} icon={BadgeCheck}>
+        <Group title={L.eligibility}>
           {elig?.text && <Row label={L.conditions}>{elig.text}</Row>}
           {elig?.nationality && (
             <Row label={L.nationality} icon={Globe}>
@@ -170,7 +162,7 @@ export default async function OpportunityPage({ params }: PageProps<"/o/[id]">) 
       )}
 
       {comp && (comp.prize || comp.salary || comp.travel_support || comp.fee) && (
-        <Group title={L.money} icon={Coins}>
+        <Group title={L.money}>
           {comp.prize && <Row label={L.prize}>{comp.prize}</Row>}
           {comp.salary && <Row label={L.salary}>{comp.salary}</Row>}
           {comp.travel_support && <Row label={L.travel}>{comp.travel_support}</Row>}
@@ -179,7 +171,7 @@ export default async function OpportunityPage({ params }: PageProps<"/o/[id]">) 
       )}
 
       {o.requirements.length > 0 && (
-        <Group title={L.prepare} icon={ListChecks}>
+        <Group title={L.prepare}>
           {o.requirements.map((r) => (
             <Row key={r} label={L.requirements[r] ?? L.other} icon={FileText}>
               {L.requirements[r] ? <span className="text-muted-foreground">{L.needed}</span> : r.replace(/^other:\s*/, "")}
@@ -189,7 +181,7 @@ export default async function OpportunityPage({ params }: PageProps<"/o/[id]">) 
       )}
 
       {children.length > 0 && (
-        <Group title={L.children(children.length)} icon={Layers}>
+        <Group title={L.children(children.length)}>
           {children.map((c) => (
             <Link key={c.id} href={`/o/${c.id}`} className="flex items-center gap-3 px-4 py-3 text-[15px] hover:text-tint">
               <span className="min-w-0 flex-1">
@@ -206,7 +198,7 @@ export default async function OpportunityPage({ params }: PageProps<"/o/[id]">) 
         </Group>
       )}
 
-      <Group title={L.source} icon={Link2}>
+      <Group title={L.source}>
         <Row label={L.location} icon={o.locationMode === "online" ? Globe : MapPin}>
           {o.locationMode === "online"
             ? t.common.online
@@ -242,7 +234,7 @@ export default async function OpportunityPage({ params }: PageProps<"/o/[id]">) 
       </Group>
 
       {revisions.length > 0 && (
-        <Group title={L.history} icon={History}>
+        <Group title={L.history}>
           {revisions.map((r) => (
             <Row key={r.id} label={formatDate(r.createdAt, true)}>
               {r.action === "create"

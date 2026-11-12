@@ -26,7 +26,8 @@ export type SortKey = (typeof SORTS)[number];
 
 export type ListFilters = {
   q?: string;
-  category?: Category;
+  /** any of these categories (empty = all) */
+  categories?: Category[];
   /** default: hide ineligible */
   showIneligible?: boolean;
   /** default: hide past deadlines */
@@ -68,7 +69,7 @@ export async function listOpportunities(userId: string, f: ListFilters, now: str
   if (!f.showIneligible) where.push(or(isNull(scores.eligibility), ne(scores.eligibility, "ineligible"))!);
   // Region scope comes from the user's settings in the same query, so callers don't wait on it first.
   where.push(or(sql`coalesce(${userSettings.regionMode}, 'focus') = 'all'`, focusRegion)!);
-  if (f.category) where.push(eq(opportunities.category, f.category));
+  if (f.categories?.length) where.push(inArray(opportunities.category, f.categories));
   if (f.q) {
     const like = `%${f.q}%`;
     where.push(or(ilike(opportunities.title, like), ilike(opportunities.organizer, like), ilike(opportunities.summary, like))!);

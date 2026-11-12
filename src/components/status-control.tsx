@@ -3,6 +3,7 @@
 import { useOptimistic, useTransition } from "react";
 import { EyeOff, PencilLine, Send, Star, Undo2, type LucideIcon } from "lucide-react";
 import { setStatus } from "@/app/actions";
+import { Select } from "@/components/filter-bar";
 import type { TrackingStatus } from "@/lib/categories";
 import type { Dict } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -57,11 +58,11 @@ export function StatusControl({
           );
         })}
       </div>
-      <select
+      <Select
         aria-label={labels.outcome}
         value={optimistic && OUTCOME.includes(optimistic) ? optimistic : ""}
         onChange={(e) => choose((e.target.value || null) as TrackingStatus | null)}
-        className="h-9 rounded-full bg-grouped px-3.5 text-[13px] text-muted-foreground"
+        className="h-9 rounded-full pl-3.5 pr-8 text-muted-foreground"
       >
         <option value="">{labels.outcome}</option>
         {OUTCOME.map((s) => (
@@ -69,7 +70,7 @@ export function StatusControl({
             {labels[s]}
           </option>
         ))}
-      </select>
+      </Select>
       <button
         type="button"
         aria-pressed={optimistic === "skipped"}

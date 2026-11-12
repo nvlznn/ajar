@@ -74,9 +74,7 @@ const zh = {
     sortTitle: "依名稱",
     minFit: "適合度",
     fitAll: "所有分數",
-    fit40: "40 分以上",
-    fit60: "60 分以上",
-    fit80: "80 分以上",
+    fitTpl: "{n} 分以上",
     markNotInterested: "標記為沒興趣",
   },
   detail: {
@@ -356,9 +354,7 @@ const en: Dict = {
     sortTitle: "By name",
     minFit: "Fit",
     fitAll: "Any fit",
-    fit40: "40 and up",
-    fit60: "60 and up",
-    fit80: "80 and up",
+    fitTpl: "{n} and up",
     markNotInterested: "Mark as not interested",
   },
   detail: {

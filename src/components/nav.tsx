@@ -27,14 +27,14 @@ export function NavFrame({
     : [];
   const linkClass = (href: string) =>
     cn(
-      "inline-flex items-center gap-1.5 transition-colors",
+      "inline-flex size-8 items-center justify-center rounded-full transition-colors hover:bg-grouped",
       isActive(href) ? "text-foreground" : "text-muted-foreground hover:text-foreground",
     );
 
   return (
     <header className="sticky top-0 z-40 border-b border-hairline/70 bg-background/80 backdrop-blur-xl backdrop-saturate-150">
-      <nav className="mx-auto flex h-11 max-w-[980px] items-center gap-5 px-4 text-[13px] sm:gap-7 sm:px-6">
-        <Link href="/" className="text-[17px] font-semibold tracking-tight">
+      <nav className="mx-auto flex h-11 max-w-[980px] items-center gap-2 px-4 text-[13px] sm:px-6">
+        <Link href="/" className="mr-3 text-[17px] font-semibold tracking-tight">
           Ajar
         </Link>
         {links.map((l) => (
@@ -43,10 +43,10 @@ export function NavFrame({
             href={l.href}
             aria-current={isActive(l.href) ? "page" : undefined}
             aria-label={l.label}
+            title={l.label}
             className={linkClass(l.href)}
           >
-            <l.icon aria-hidden className="size-4" strokeWidth={1.9} />
-            <span className="max-sm:sr-only">{l.label}</span>
+            <l.icon aria-hidden className="size-[18px]" strokeWidth={1.9} />
           </Link>
         ))}
         {labels && (
@@ -54,10 +54,10 @@ export function NavFrame({
             href="/settings"
             aria-current={isActive("/settings") ? "page" : undefined}
             aria-label={labels.settings}
+            title={labels.settings}
             className={cn("ml-auto", linkClass("/settings"))}
           >
-            <Settings aria-hidden className="size-4" strokeWidth={1.9} />
-            <span className="max-sm:sr-only">{labels.settings}</span>
+            <Settings aria-hidden className="size-[18px]" strokeWidth={1.9} />
           </Link>
         )}
       </nav>

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { CategoryIcon } from "@/components/category-dot";
-import { Inbox, Star } from "lucide-react";
+import { Inbox } from "lucide-react";
 import { DeadlineRuler } from "@/components/deadline-ruler";
 import { FilterBar } from "@/components/filter-bar";
 import { OpportunityRow } from "@/components/opportunity-row";
@@ -32,10 +32,15 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   const [user, { t }, sp] = await Promise.all([requireUser(), getDict(), searchParams]);
   const one = (k: string) => (typeof sp[k] === "string" ? (sp[k] as string) : undefined);
   const view = one("view");
-  const category = one("category");
+  // ?category=internship,hackathon — multi-select, unknown values ignored
+  const categories = (one("category") ?? "")
+    .split(",")
+    .filter((c): c is Category => c in CATEGORY_COLOR);
   const sortParam = one("sort");
   const sort: SortKey = SORTS.includes(sortParam as SortKey) ? (sortParam as SortKey) : "deadline";
-  const minFit = [40, 60, 80].includes(Number(one("fit"))) ? Number(one("fit")) : undefined;
+  // Fit threshold in steps of 10 (10–90).
+  const fitN = Number(one("fit"));
+  const minFit = Number.isInteger(fitN) && fitN >= 10 && fitN <= 90 && fitN % 10 === 0 ? fitN : undefined;
 
   const now = new Date();
   const [items, tracking, soon] = await Promise.all([
@@ -43,7 +48,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
       user.id,
       {
         q: one("q"),
-        category: category && category in CATEGORY_COLOR ? (category as Category) : undefined,
+        categories,
         showIneligible: view === "ineligible",
         showArchived: view === "archived",
         showSkipped: view === "skipped",
@@ -62,7 +67,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   }).length;
   // Month headings only make sense when the list is in deadline order.
   const groups = sort === "deadline" ? groupByMonth(items, t) : [{ label: "", items }];
-  const filtered = Boolean(one("q") || category || minFit || view === "skipped");
+  const filtered = Boolean(one("q") || categories.length || minFit || view === "skipped");
 
   return (
     <div>
@@ -78,8 +83,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
 
       {tracking.length > 0 && (
         <section aria-labelledby="tracking" className="mt-14">
-          <h2 id="tracking" className="flex items-center gap-2 text-[21px] font-semibold leading-7">
-            <Star aria-hidden className="size-5 text-tint" strokeWidth={2} fill="currentColor" />
+          <h2 id="tracking" className="text-[21px] font-semibold leading-7">
             {t.home.tracking}
           </h2>
           <ul className="mt-3 divide-y divide-hairline/70 rounded-xl bg-grouped">

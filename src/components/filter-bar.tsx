@@ -2,9 +2,32 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
-import { ArrowDownUp, Search } from "lucide-react";
+import { ArrowDownUp, ChevronDown, Search } from "lucide-react";
+import { CategoryIcon } from "@/components/category-dot";
+import type { Category } from "@/lib/categories";
 import type { Dict } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+
+/** Native <select> with our own chevron, so the arrow sits a fixed, comfortable distance from the text. */
+export function Select({
+  className,
+  wrapperClassName,
+  children,
+  ...props
+}: React.SelectHTMLAttributes<HTMLSelectElement> & { wrapperClassName?: string }) {
+  return (
+    <span className={cn("relative inline-flex", wrapperClassName)}>
+      <select {...props} className={cn("h-8 appearance-none rounded-lg bg-grouped pl-3 pr-7 text-[13px]", className)}>
+        {children}
+      </select>
+      <ChevronDown
+        aria-hidden
+        className="pointer-events-none absolute right-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground"
+        strokeWidth={2}
+      />
+    </span>
+  );
+}
 
 export function Segmented<T extends string>({
   value,
@@ -54,79 +77,114 @@ export function FilterBar({ labels, categories }: { labels: Dict["filters"]; cat
   };
 
   const view = (params.get("view") ?? "open") as "open" | "ineligible" | "archived" | "skipped";
+  const selected = (params.get("category") ?? "").split(",").filter(Boolean) as Category[];
+  const toggle = (c: Category) => {
+    const next = selected.includes(c) ? selected.filter((x) => x !== c) : [...selected, c];
+    set("category", next.length ? next.join(",") : null);
+  };
 
   return (
-    <div className={cn("flex flex-wrap items-center gap-2 transition-opacity", pending && "opacity-60")}>
-      <div className="relative w-full sm:w-56">
-        <Search
-          aria-hidden
-          className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground"
-        />
-        <input
-          type="search"
-          defaultValue={params.get("q") ?? ""}
-          placeholder={labels.search}
-          aria-label={labels.searchAria}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") set("q", e.currentTarget.value.trim() || null);
-          }}
-          onBlur={(e) => {
-            if ((params.get("q") ?? "") !== e.currentTarget.value.trim())
-              set("q", e.currentTarget.value.trim() || null);
-          }}
-          className="h-8 w-full rounded-lg bg-grouped pl-8 pr-3 text-[13px] placeholder:text-muted-foreground"
-        />
-      </div>
-      <select
-        aria-label={labels.category}
-        value={params.get("category") ?? ""}
-        onChange={(e) => set("category", e.target.value || null)}
-        className="h-8 rounded-lg bg-grouped px-2.5 text-[13px]"
-      >
-        <option value="">{labels.allCategories}</option>
-        {Object.entries(categories).map(([k, v]) => (
-          <option key={k} value={k}>
-            {v}
-          </option>
-        ))}
-      </select>
-      <select
-        aria-label={labels.minFit}
-        value={params.get("fit") ?? ""}
-        onChange={(e) => set("fit", e.target.value || null)}
-        className="h-8 rounded-lg bg-grouped px-2.5 text-[13px]"
-      >
-        <option value="">{labels.fitAll}</option>
-        <option value="40">{labels.fit40}</option>
-        <option value="60">{labels.fit60}</option>
-        <option value="80">{labels.fit80}</option>
-      </select>
-      <Segmented
-        label={labels.show}
-        value={view}
-        onChange={(v) => set("view", v === "open" ? null : v)}
-        options={[
-          { value: "open", label: labels.open },
-          { value: "ineligible", label: labels.withIneligible },
-          { value: "archived", label: labels.archived },
-          { value: "skipped", label: labels.skipped },
-        ]}
-      />
-      <label className="inline-flex items-center gap-1.5 text-[13px] text-muted-foreground sm:ml-auto">
-        <ArrowDownUp aria-hidden className="size-3.5" />
-        <span className="sr-only">{labels.sort}</span>
-        <select
-          aria-label={labels.sort}
-          value={params.get("sort") ?? "deadline"}
-          onChange={(e) => set("sort", e.target.value === "deadline" ? null : e.target.value)}
-          className="h-8 rounded-lg bg-grouped px-2.5 text-[13px] text-foreground"
+    <div className={cn("space-y-3 transition-opacity", pending && "opacity-60")}>
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative w-full sm:w-56">
+          <Search
+            aria-hidden
+            className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground"
+          />
+          <input
+            type="search"
+            defaultValue={params.get("q") ?? ""}
+            placeholder={labels.search}
+            aria-label={labels.searchAria}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") set("q", e.currentTarget.value.trim() || null);
+            }}
+            onBlur={(e) => {
+              if ((params.get("q") ?? "") !== e.currentTarget.value.trim())
+                set("q", e.currentTarget.value.trim() || null);
+            }}
+            className="h-8 w-full rounded-lg bg-grouped pl-8 pr-3 text-[13px] placeholder:text-muted-foreground"
+          />
+        </div>
+        <Select
+          aria-label={labels.minFit}
+          value={params.get("fit") ?? ""}
+          onChange={(e) => set("fit", e.target.value || null)}
         >
-          <option value="deadline">{labels.sortDeadline}</option>
-          <option value="fit">{labels.sortFit}</option>
-          <option value="new">{labels.sortNew}</option>
-          <option value="title">{labels.sortTitle}</option>
-        </select>
-      </label>
+          <option value="">{labels.fitAll}</option>
+          {[90, 80, 70, 60, 50, 40, 30, 20, 10].map((n) => (
+            <option key={n} value={n}>
+              {labels.fitTpl.replace("{n}", String(n))}
+            </option>
+          ))}
+        </Select>
+        <Segmented
+          label={labels.show}
+          value={view}
+          onChange={(v) => set("view", v === "open" ? null : v)}
+          options={[
+            { value: "open", label: labels.open },
+            { value: "ineligible", label: labels.withIneligible },
+            { value: "archived", label: labels.archived },
+            { value: "skipped", label: labels.skipped },
+          ]}
+        />
+        <span className="inline-flex items-center gap-1.5 text-muted-foreground sm:ml-auto">
+          <ArrowDownUp aria-hidden className="size-3.5" />
+          <Select
+            aria-label={labels.sort}
+            value={params.get("sort") ?? "deadline"}
+            onChange={(e) => set("sort", e.target.value === "deadline" ? null : e.target.value)}
+            className="text-foreground"
+          >
+            <option value="deadline">{labels.sortDeadline}</option>
+            <option value="fit">{labels.sortFit}</option>
+            <option value="new">{labels.sortNew}</option>
+            <option value="title">{labels.sortTitle}</option>
+          </Select>
+        </span>
+      </div>
+
+      {/* Category: multi-select chips (e.g. internship + hackathon). Scrolls sideways on phones. */}
+      <div
+        role="group"
+        aria-label={labels.category}
+        className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0"
+      >
+        <button
+          type="button"
+          aria-pressed={selected.length === 0}
+          onClick={() => set("category", null)}
+          className={cn(
+            "inline-flex h-7 shrink-0 items-center rounded-full border px-3 text-[12px] transition-colors",
+            selected.length === 0
+              ? "border-foreground bg-foreground text-background"
+              : "border-hairline text-muted-foreground hover:text-foreground",
+          )}
+        >
+          {labels.allCategories}
+        </button>
+        {(Object.keys(categories) as Category[]).map((c) => {
+          const on = selected.includes(c);
+          return (
+            <button
+              key={c}
+              type="button"
+              aria-pressed={on}
+              onClick={() => toggle(c)}
+              className={cn(
+                "inline-flex h-7 shrink-0 items-center gap-1.5 rounded-full border px-3 text-[12px] transition-colors",
+                on
+                  ? "border-foreground bg-foreground text-background"
+                  : "border-hairline text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <CategoryIcon category={c} className={cn("size-3", on && "!text-background")} />
+              {categories[c]}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
