@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CategoryLabel } from "@/components/category-dot";
+import { NotInterestedButton } from "@/components/not-interested-button";
 import type { Category, TrackingStatus } from "@/lib/categories";
 import { daysUntil, taipei } from "@/lib/format";
 import type { Dict } from "@/lib/i18n";
@@ -26,7 +27,21 @@ function place(it: RowItem, t: Dict) {
   return [it.city, it.country && it.country !== "TW" ? it.country : null].filter(Boolean).join(t.common.listSep) || null;
 }
 
-export function OpportunityRow({ it, t, now = new Date() }: { it: RowItem; t: Dict; now?: Date }) {
+export function OpportunityRow({
+  it,
+  t,
+  now = new Date(),
+  restore = false,
+  showMonth = false,
+}: {
+  it: RowItem;
+  t: Dict;
+  now?: Date;
+  /** In the "not interested" view the quick action restores instead of hiding. */
+  restore?: boolean;
+  /** Without month headings (non-deadline sorts) the date column needs the month too. */
+  showMonth?: boolean;
+}) {
   const d = it.deadlineAt ? taipei(it.deadlineAt) : null;
   const days = it.deadlineAt ? daysUntil(it.deadlineAt, now) : null;
   const urgent = days !== null && days >= 0 && days <= 3;
@@ -36,15 +51,23 @@ export function OpportunityRow({ it, t, now = new Date() }: { it: RowItem; t: Di
   const category = <CategoryLabel category={it.category} label={t.categories[it.category]} />;
 
   return (
-    <li>
+    <li className="group/row relative">
       <Link
         href={`/o/${it.id}`}
-        className="group -mx-3 grid grid-cols-[44px_minmax(0,1fr)] gap-x-4 rounded-lg px-3 py-3 transition-colors hover:bg-grouped sm:grid-cols-[52px_minmax(0,1fr)_auto]"
+        className="group -mx-3 grid grid-cols-[44px_minmax(0,1fr)] gap-x-4 rounded-lg py-3 pl-3 pr-12 transition-colors hover:bg-grouped sm:grid-cols-[52px_minmax(0,1fr)_auto]"
       >
         <div className="pt-0.5 tnum">
           {d ? (
             <>
-              <div className={cn("text-[20px] font-semibold leading-6", urgent && "text-urgent")}>{d.d}</div>
+              <div
+                className={cn(
+                  "font-semibold leading-6",
+                  showMonth ? "text-[15px]" : "text-[20px]",
+                  urgent && "text-urgent",
+                )}
+              >
+                {showMonth ? `${d.m}/${d.d}` : d.d}
+              </div>
               <div className="text-[12px] leading-4 text-muted-foreground">
                 {it.deadlineEstimated ? t.common.estimated : t.weekdays[d.dow]}
               </div>
@@ -89,6 +112,11 @@ export function OpportunityRow({ it, t, now = new Date() }: { it: RowItem; t: Di
           <span className="w-16 text-right text-tint">{it.status ? t.status[it.status] : ""}</span>
         </div>
       </Link>
+      <NotInterestedButton
+        opportunityId={it.id}
+        restore={restore}
+        label={restore ? t.status.restore : t.filters.markNotInterested}
+      />
     </li>
   );
 }

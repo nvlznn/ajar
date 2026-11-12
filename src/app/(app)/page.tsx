@@ -8,7 +8,7 @@ import { CATEGORY_COLOR, type Category } from "@/lib/categories";
 import { daysUntil, taipei, taipeiDayStart } from "@/lib/format";
 import type { Dict } from "@/lib/i18n";
 import { getDict } from "@/lib/locale";
-import { deadlinesInRange, listOpportunities, listTracking, nowBucket, type ListItem } from "@/lib/queries";
+import { SORTS, deadlinesInRange, listOpportunities, listTracking, nowBucket, type ListItem, type SortKey } from "@/lib/queries";
 import { requireUser } from "@/lib/session";
 
 function groupByMonth(items: ListItem[], t: Dict) {
@@ -33,6 +33,9 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   const one = (k: string) => (typeof sp[k] === "string" ? (sp[k] as string) : undefined);
   const view = one("view");
   const category = one("category");
+  const sortParam = one("sort");
+  const sort: SortKey = SORTS.includes(sortParam as SortKey) ? (sortParam as SortKey) : "deadline";
+  const minFit = [40, 60, 80].includes(Number(one("fit"))) ? Number(one("fit")) : undefined;
 
   const now = new Date();
   const [items, tracking, soon] = await Promise.all([
@@ -43,6 +46,9 @@ export default async function Home({ searchParams }: PageProps<"/">) {
         category: category && category in CATEGORY_COLOR ? (category as Category) : undefined,
         showIneligible: view === "ineligible",
         showArchived: view === "archived",
+        showSkipped: view === "skipped",
+        minFit,
+        sort,
       },
       nowBucket(now),
     ),
@@ -54,7 +60,9 @@ export default async function Home({ searchParams }: PageProps<"/">) {
     const n = daysUntil(s.deadlineAt, now);
     return n >= 0 && n <= 14;
   }).length;
-  const groups = groupByMonth(items, t);
+  // Month headings only make sense when the list is in deadline order.
+  const groups = sort === "deadline" ? groupByMonth(items, t) : [{ label: "", items }];
+  const filtered = Boolean(one("q") || category || minFit || view === "skipped");
 
   return (
     <div>
@@ -99,7 +107,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
       <section aria-labelledby="all" className="mt-14">
         <div className="flex items-baseline justify-between">
           <h2 id="all" className="text-[21px] font-semibold leading-7">
-            {view === "archived" ? t.home.archived : t.home.all}
+            {view === "archived" ? t.home.archived : view === "skipped" ? t.filters.skipped : t.home.all}
           </h2>
           <span className="text-[13px] text-muted-foreground tnum">{t.home.count(items.length)}</span>
         </div>
@@ -110,17 +118,19 @@ export default async function Home({ searchParams }: PageProps<"/">) {
         {items.length === 0 ? (
           <div className="mt-12 flex max-w-md items-start gap-3 text-[15px] text-muted-foreground">
             <Inbox aria-hidden className="mt-0.5 size-5 shrink-0" strokeWidth={1.75} />
-            <p>{one("q") || category ? t.home.emptyFiltered : t.home.empty}</p>
+            <p>{filtered ? t.home.emptyFiltered : t.home.empty}</p>
           </div>
         ) : (
           groups.map((g) => (
-            <div key={g.label} className="mt-8">
-              <h3 className="border-b border-hairline pb-2 text-[13px] font-semibold text-muted-foreground">
-                {g.label}
-              </h3>
-              <ul className="divide-y divide-hairline/60">
+            <div key={g.label || "all"} className="mt-8">
+              {g.label && (
+                <h3 className="border-b border-hairline pb-2 text-[13px] font-semibold text-muted-foreground">
+                  {g.label}
+                </h3>
+              )}
+              <ul className={g.label ? "divide-y divide-hairline/60" : "divide-y divide-hairline/60 border-t border-hairline"}>
                 {g.items.map((it) => (
-                  <OpportunityRow key={it.id} it={it} t={t} now={now} />
+                  <OpportunityRow key={it.id} it={it} t={t} now={now} restore={view === "skipped"} showMonth={!g.label} />
                 ))}
               </ul>
             </div>

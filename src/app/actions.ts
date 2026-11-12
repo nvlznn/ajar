@@ -29,8 +29,8 @@ export async function setStatus(opportunityId: string, status: TrackingStatus | 
   updateTag(`user:${u.id}`);
 }
 
+/** Public: also used on the landing page by signed-out visitors. Only writes the language cookie. */
 export async function setLocale(locale: Locale) {
-  await requireUser();
   if (!isLocale(locale)) throw new Error("invalid locale");
   (await cookies()).set(LOCALE_COOKIE, locale, { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" });
   refresh();

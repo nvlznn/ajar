@@ -21,6 +21,9 @@ export function nowBucket(d = new Date()): string {
 
 export type RegionMode = "focus" | "all";
 
+export const SORTS = ["deadline", "fit", "new", "title"] as const;
+export type SortKey = (typeof SORTS)[number];
+
 export type ListFilters = {
   q?: string;
   category?: Category;
@@ -28,6 +31,11 @@ export type ListFilters = {
   showIneligible?: boolean;
   /** default: hide past deadlines */
   showArchived?: boolean;
+  /** show only items marked "not interested" (status skipped), instead of hiding them */
+  showSkipped?: boolean;
+  /** hide items scoring below this (unscored items are hidden when > 0) */
+  minFit?: number;
+  sort?: SortKey;
 };
 
 export async function getSettings(userId: string) {
@@ -65,7 +73,19 @@ export async function listOpportunities(userId: string, f: ListFilters, now: str
     const like = `%${f.q}%`;
     where.push(or(ilike(opportunities.title, like), ilike(opportunities.organizer, like), ilike(opportunities.summary, like))!);
   }
-  where.push(or(isNull(userStatus.status), ne(userStatus.status, "skipped"))!);
+  if (f.showSkipped) where.push(eq(userStatus.status, "skipped"));
+  else where.push(or(isNull(userStatus.status), ne(userStatus.status, "skipped"))!);
+  if (f.minFit) where.push(gte(scores.score, f.minFit));
+
+  const deadlineOrder = f.showArchived ? desc(opportunities.deadlineAt) : sql`${opportunities.deadlineAt} asc nulls last`;
+  const order =
+    f.sort === "fit"
+      ? [sql`${scores.score} desc nulls last`, deadlineOrder]
+      : f.sort === "new"
+        ? [desc(opportunities.firstSeenAt), deadlineOrder]
+        : f.sort === "title"
+          ? [asc(opportunities.title)]
+          : [deadlineOrder, desc(scores.score)];
 
   return db
     .select({
@@ -89,7 +109,7 @@ export async function listOpportunities(userId: string, f: ListFilters, now: str
     .leftJoin(scores, and(eq(scores.opportunityId, opportunities.id), eq(scores.userId, userId)))
     .leftJoin(userStatus, and(eq(userStatus.opportunityId, opportunities.id), eq(userStatus.userId, userId)))
     .where(and(...where))
-    .orderBy(f.showArchived ? desc(opportunities.deadlineAt) : sql`${opportunities.deadlineAt} asc nulls last`, desc(scores.score))
+    .orderBy(...order)
     .limit(1000);
 }
 
@@ -181,4 +201,16 @@ export async function getProfile(userId: string) {
   cacheLife("max");
   const [p] = await db.select().from(profiles).where(eq(profiles.userId, userId));
   return p ?? null;
+}
+
+/** Aggregate counts for the public landing page (no personal data). */
+export async function getPublicStats() {
+  "use cache";
+  cacheTag("opportunities");
+  cacheLife("hours");
+  const [r] = await db
+    .select({ open: sql<number>`count(*)::int` })
+    .from(opportunities)
+    .where(and(isNull(opportunities.parentId), or(isNull(opportunities.deadlineAt), gte(opportunities.deadlineAt, sql`now()`))));
+  return { open: r?.open ?? 0 };
 }

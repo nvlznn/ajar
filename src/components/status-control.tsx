@@ -1,7 +1,7 @@
 "use client";
 
 import { useOptimistic, useTransition } from "react";
-import { PencilLine, Send, Star, type LucideIcon } from "lucide-react";
+import { EyeOff, PencilLine, Send, Star, Undo2, type LucideIcon } from "lucide-react";
 import { setStatus } from "@/app/actions";
 import type { TrackingStatus } from "@/lib/categories";
 import type { Dict } from "@/lib/i18n";
@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 
 const PRIMARY: TrackingStatus[] = ["interested", "preparing", "applied"];
 const ICON: Partial<Record<TrackingStatus, LucideIcon>> = { interested: Star, preparing: PencilLine, applied: Send };
-const OUTCOME: TrackingStatus[] = ["accepted", "rejected", "skipped"];
+const OUTCOME: TrackingStatus[] = ["accepted", "rejected"];
 
 export function StatusControl({
   opportunityId,
@@ -70,6 +70,24 @@ export function StatusControl({
           </option>
         ))}
       </select>
+      <button
+        type="button"
+        aria-pressed={optimistic === "skipped"}
+        onClick={() => choose(optimistic === "skipped" ? null : "skipped")}
+        className={cn(
+          "inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 text-[13px] transition-colors",
+          optimistic === "skipped"
+            ? "bg-foreground text-background"
+            : "bg-grouped text-muted-foreground hover:text-foreground",
+        )}
+      >
+        {optimistic === "skipped" ? (
+          <Undo2 aria-hidden className="size-3.5" strokeWidth={2} />
+        ) : (
+          <EyeOff aria-hidden className="size-3.5" strokeWidth={2} />
+        )}
+        {optimistic === "skipped" ? labels.restore : labels.notInterested}
+      </button>
     </div>
   );
 }

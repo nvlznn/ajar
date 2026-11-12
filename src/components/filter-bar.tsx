@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
-import { Search } from "lucide-react";
+import { ArrowDownUp, Search } from "lucide-react";
 import type { Dict } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -53,7 +53,7 @@ export function FilterBar({ labels, categories }: { labels: Dict["filters"]; cat
     start(() => router.replace(`${pathname}?${next.toString()}`, { scroll: false }));
   };
 
-  const view = (params.get("view") ?? "open") as "open" | "ineligible" | "archived";
+  const view = (params.get("view") ?? "open") as "open" | "ineligible" | "archived" | "skipped";
 
   return (
     <div className={cn("flex flex-wrap items-center gap-2 transition-opacity", pending && "opacity-60")}>
@@ -90,6 +90,17 @@ export function FilterBar({ labels, categories }: { labels: Dict["filters"]; cat
           </option>
         ))}
       </select>
+      <select
+        aria-label={labels.minFit}
+        value={params.get("fit") ?? ""}
+        onChange={(e) => set("fit", e.target.value || null)}
+        className="h-8 rounded-lg bg-grouped px-2.5 text-[13px]"
+      >
+        <option value="">{labels.fitAll}</option>
+        <option value="40">{labels.fit40}</option>
+        <option value="60">{labels.fit60}</option>
+        <option value="80">{labels.fit80}</option>
+      </select>
       <Segmented
         label={labels.show}
         value={view}
@@ -98,8 +109,24 @@ export function FilterBar({ labels, categories }: { labels: Dict["filters"]; cat
           { value: "open", label: labels.open },
           { value: "ineligible", label: labels.withIneligible },
           { value: "archived", label: labels.archived },
+          { value: "skipped", label: labels.skipped },
         ]}
       />
+      <label className="inline-flex items-center gap-1.5 text-[13px] text-muted-foreground sm:ml-auto">
+        <ArrowDownUp aria-hidden className="size-3.5" />
+        <span className="sr-only">{labels.sort}</span>
+        <select
+          aria-label={labels.sort}
+          value={params.get("sort") ?? "deadline"}
+          onChange={(e) => set("sort", e.target.value === "deadline" ? null : e.target.value)}
+          className="h-8 rounded-lg bg-grouped px-2.5 text-[13px] text-foreground"
+        >
+          <option value="deadline">{labels.sortDeadline}</option>
+          <option value="fit">{labels.sortFit}</option>
+          <option value="new">{labels.sortNew}</option>
+          <option value="title">{labels.sortTitle}</option>
+        </select>
+      </label>
     </div>
   );
 }
