@@ -116,6 +116,7 @@ export async function listOpportunities(userId: string, f: ListFilters, now: str
 
 export type ListItem = Awaited<ReturnType<typeof listOpportunities>>[number];
 
+/** Tracked items (interested / preparing / applied) with the same fields as the main list. */
 export async function listTracking(userId: string) {
   "use cache";
   cacheTag("opportunities", userTag(userId));
@@ -125,12 +126,21 @@ export async function listTracking(userId: string) {
       id: opportunities.id,
       title: opportunities.title,
       category: opportunities.category,
+      organizer: opportunities.organizer,
+      city: opportunities.city,
+      country: opportunities.country,
+      locationMode: opportunities.locationMode,
       deadlineAt: opportunities.deadlineAt,
       deadlineEstimated: opportunities.deadlineEstimated,
+      prepDays: opportunities.prepDays,
+      firstSeenAt: opportunities.firstSeenAt,
+      score: scores.score,
+      eligibility: scores.eligibility,
       status: userStatus.status,
     })
     .from(userStatus)
     .innerJoin(opportunities, eq(opportunities.id, userStatus.opportunityId))
+    .leftJoin(scores, and(eq(scores.opportunityId, opportunities.id), eq(scores.userId, userId)))
     .where(and(eq(userStatus.userId, userId), inArray(userStatus.status, TRACKING)))
     .orderBy(sql`${opportunities.deadlineAt} asc nulls last`);
 }

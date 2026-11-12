@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { CategoryLabel } from "@/components/category-dot";
-import { NotInterestedButton } from "@/components/not-interested-button";
+import { RowStatusMenu } from "@/components/row-status-menu";
 import type { Category, TrackingStatus } from "@/lib/categories";
 import { daysUntil, taipei } from "@/lib/format";
 import type { Dict } from "@/lib/i18n";
@@ -31,16 +31,16 @@ export function OpportunityRow({
   it,
   t,
   now = new Date(),
-  restore = false,
   showMonth = false,
+  hideStatus = false,
 }: {
   it: RowItem;
   t: Dict;
   now?: Date;
-  /** In the "not interested" view the quick action restores instead of hiding. */
-  restore?: boolean;
   /** Without month headings (non-deadline sorts) the date column needs the month too. */
   showMonth?: boolean;
+  /** Inside the tracking groups the heading already says the status. */
+  hideStatus?: boolean;
 }) {
   const d = it.deadlineAt ? taipei(it.deadlineAt) : null;
   const days = it.deadlineAt ? daysUntil(it.deadlineAt, now) : null;
@@ -96,7 +96,7 @@ export function OpportunityRow({
                 {it.eligibility === "maybe" && <span> {t.eligibility.maybe}</span>}
               </span>
             )}
-            {it.status && <span className="text-tint">{t.status[it.status]}</span>}
+            {it.status && !hideStatus && <span className="text-tint">{t.status[it.status]}</span>}
           </div>
         </div>
 
@@ -109,14 +109,10 @@ export function OpportunityRow({
           >
             {it.score ?? ""}
           </span>
-          <span className="w-16 text-right text-tint">{it.status ? t.status[it.status] : ""}</span>
+          <span className="w-16 text-right text-tint">{it.status && !hideStatus ? t.status[it.status] : ""}</span>
         </div>
       </Link>
-      <NotInterestedButton
-        opportunityId={it.id}
-        restore={restore}
-        label={restore ? t.status.restore : t.filters.markNotInterested}
-      />
+      <RowStatusMenu opportunityId={it.id} status={it.status} labels={t.status} />
     </li>
   );
 }

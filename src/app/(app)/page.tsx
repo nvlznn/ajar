@@ -1,10 +1,8 @@
-import Link from "next/link";
-import { CategoryIcon } from "@/components/category-dot";
 import { Inbox } from "lucide-react";
 import { DeadlineRuler } from "@/components/deadline-ruler";
 import { FilterBar } from "@/components/filter-bar";
 import { OpportunityRow } from "@/components/opportunity-row";
-import { CATEGORY_COLOR, type Category } from "@/lib/categories";
+import { CATEGORY_COLOR, TRACKING, type Category } from "@/lib/categories";
 import { daysUntil, taipei, taipeiDayStart } from "@/lib/format";
 import type { Dict } from "@/lib/i18n";
 import { getDict } from "@/lib/locale";
@@ -86,25 +84,24 @@ export default async function Home({ searchParams }: PageProps<"/">) {
           <h2 id="tracking" className="text-[21px] font-semibold leading-7">
             {t.home.tracking}
           </h2>
-          <ul className="mt-3 divide-y divide-hairline/70 rounded-xl bg-grouped">
-            {tracking.map((it) => {
-              const d = it.deadlineAt ? daysUntil(it.deadlineAt, now) : null;
-              return (
-                <li key={it.id}>
-                  <Link href={`/o/${it.id}`} className="flex items-center gap-3 px-4 py-2.5 text-[15px]">
-                    <CategoryIcon category={it.category} />
-                    <span className="min-w-0 flex-1 truncate">{it.title}</span>
-                    <span className="shrink-0 text-[13px] text-tint">{it.status && t.status[it.status]}</span>
-                    <span
-                      className={`w-20 shrink-0 text-right text-[13px] tnum ${d !== null && d >= 0 && d <= 3 ? "text-urgent" : "text-muted-foreground"}`}
-                    >
-                      {d !== null ? t.relative(d) : t.common.anytime}
-                    </span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
+          {/* One group per stage, each row identical to the main list. */}
+          {TRACKING.map((status) => {
+            const group = tracking.filter((it) => it.status === status);
+            if (!group.length) return null;
+            return (
+              <div key={status} className="mt-6">
+                <h3 className="flex items-baseline justify-between border-b border-hairline pb-2 text-[13px] font-semibold text-muted-foreground">
+                  {t.status[status]}
+                  <span className="font-normal tnum">{t.home.count(group.length)}</span>
+                </h3>
+                <ul className="divide-y divide-hairline/60">
+                  {group.map((it) => (
+                    <OpportunityRow key={it.id} it={it} t={t} now={now} showMonth hideStatus />
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
         </section>
       )}
 
@@ -134,7 +131,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
               )}
               <ul className={g.label ? "divide-y divide-hairline/60" : "divide-y divide-hairline/60 border-t border-hairline"}>
                 {g.items.map((it) => (
-                  <OpportunityRow key={it.id} it={it} t={t} now={now} restore={view === "skipped"} showMonth={!g.label} />
+                  <OpportunityRow key={it.id} it={it} t={t} now={now} showMonth={!g.label} />
                 ))}
               </ul>
             </div>
