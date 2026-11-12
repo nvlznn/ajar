@@ -77,11 +77,9 @@ export function FilterBar({ labels, categories }: { labels: Dict["filters"]; cat
   };
 
   const view = (params.get("view") ?? "open") as "open" | "ineligible" | "archived" | "skipped";
-  const selected = (params.get("category") ?? "").split(",").filter(Boolean) as Category[];
-  const toggle = (c: Category) => {
-    const next = selected.includes(c) ? selected.filter((x) => x !== c) : [...selected, c];
-    set("category", next.length ? next.join(",") : null);
-  };
+  // Single-select: picking the active chip again goes back to all categories.
+  const current = (params.get("category") ?? "").split(",")[0] || null;
+  const pick = (c: Category) => set("category", current === c ? null : c);
 
   return (
     <div className={cn("space-y-3 transition-opacity", pending && "opacity-60")}>
@@ -145,19 +143,20 @@ export function FilterBar({ labels, categories }: { labels: Dict["filters"]; cat
         </span>
       </div>
 
-      {/* Category: multi-select chips (e.g. internship + hackathon). Scrolls sideways on phones. */}
+      {/* Category: single-select chips. Scrolls sideways on phones. */}
       <div
-        role="group"
+        role="radiogroup"
         aria-label={labels.category}
         className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0"
       >
         <button
           type="button"
-          aria-pressed={selected.length === 0}
+          role="radio"
+          aria-checked={current === null}
           onClick={() => set("category", null)}
           className={cn(
             "inline-flex h-7 shrink-0 items-center rounded-full border px-3 text-[12px] transition-colors",
-            selected.length === 0
+            current === null
               ? "border-foreground bg-foreground text-background"
               : "border-hairline text-muted-foreground hover:text-foreground",
           )}
@@ -165,13 +164,14 @@ export function FilterBar({ labels, categories }: { labels: Dict["filters"]; cat
           {labels.allCategories}
         </button>
         {(Object.keys(categories) as Category[]).map((c) => {
-          const on = selected.includes(c);
+          const on = current === c;
           return (
             <button
               key={c}
               type="button"
-              aria-pressed={on}
-              onClick={() => toggle(c)}
+              role="radio"
+              aria-checked={on}
+              onClick={() => pick(c)}
               className={cn(
                 "inline-flex h-7 shrink-0 items-center gap-1.5 rounded-full border px-3 text-[12px] transition-colors",
                 on
