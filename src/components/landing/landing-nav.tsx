@@ -35,10 +35,7 @@ export function LandingNav({ t, locale }: { t: Dict["landing"]["nav"]; locale: L
           >
             {other === "en" ? "English" : "中文"}
           </button>
-          <Link
-            href="/login"
-            className="inline-flex h-8 items-center rounded-full bg-foreground px-4 font-medium text-background hover:opacity-90"
-          >
+          <Link href="/login" className="text-muted-foreground hover:text-foreground">
             {t.signIn}
           </Link>
         </div>

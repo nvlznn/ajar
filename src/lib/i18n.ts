@@ -212,9 +212,10 @@ const zh = {
     hero: {
       title: "別再錯過任何一個截止日。",
       sub: "Ajar 從各處搜集黑客松、實習、交換、競賽、獎學金與研究機會，依你的背景評分，並告訴你什麼時候該開始準備。",
-      cta: "使用 Google 登入",
+      cta: "在 GitHub 查看",
       secondary: "看看怎麼運作",
-      access: "目前為私人測試，僅限受邀帳號。",
+      access: "即將上線。目前只開放給開發者本人使用。",
+      signIn: "使用 Google 登入",
     },
     demo: {
       label: "接下來 14 天",
@@ -270,10 +271,10 @@ const zh = {
         { q: "多久更新一次？", a: "每週搜集新機會，並重新確認即將截止的項目是否延期或變動。" },
         { q: "適合度是怎麼算的？", a: "依你的個人檔案判斷資格與契合度，給出 0 到 100 的分數與一句理由。不符合資格的機會預設隱藏，但隨時可以打開來看。" },
         { q: "會提醒我嗎？", a: "目前可以在網站上依截止日與準備時間追蹤。Discord 提醒與行事曆訂閱即將推出。" },
-        { q: "誰可以使用？", a: "目前是私人測試版，僅限受邀帳號登入。" },
+        { q: "誰可以使用？", a: "Ajar 即將上線，目前只開放給開發者本人。想追蹤進度可以到 GitHub 看看。" },
       ],
     },
-    cta: { title: "下一個好機會，可能下週就截止。", button: "使用 Google 登入" },
+    cta: { title: "下一個好機會，可能下週就截止。", button: "在 GitHub 查看", note: "即將上線，敬請期待。" },
     footer: { by: "由 Noky 打造" },
   },
 };
@@ -494,9 +495,10 @@ const en: Dict = {
     hero: {
       title: "Never miss a deadline that matters.",
       sub: "Ajar gathers hackathons, internships, exchanges, competitions, scholarships and research programs from everywhere, scores each one against your background, and tells you when to start preparing.",
-      cta: "Continue with Google",
+      cta: "View on GitHub",
       secondary: "See how it works",
-      access: "Private beta. Invited accounts only.",
+      access: "Coming soon. For now, only the developer can sign in.",
+      signIn: "Sign in with Google",
     },
     demo: {
       label: "Next 14 days",
@@ -552,10 +554,10 @@ const en: Dict = {
         { q: "How often is it updated?", a: "New opportunities are collected weekly, and anything closing soon is re-checked for extensions and changes." },
         { q: "How is fit scored?", a: "Your profile is used to judge eligibility and fit, giving a 0–100 score with a one-line reason. Items you aren't eligible for are hidden by default, and one tap shows them." },
         { q: "Will it remind me?", a: "Today you track deadlines and prep time on the site. Discord reminders and a calendar feed are coming soon." },
-        { q: "Who can use it?", a: "Ajar is in private beta, and only invited accounts can sign in." },
+        { q: "Who can use it?", a: "Ajar is coming soon. For now, only the developer can sign in. Follow progress on GitHub." },
       ],
     },
-    cta: { title: "The next good opportunity might close next week.", button: "Continue with Google" },
+    cta: { title: "The next good opportunity might close next week.", button: "View on GitHub", note: "Coming soon." },
     footer: { by: "Made by Noky" },
   },
 };

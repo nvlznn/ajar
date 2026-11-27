@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { ArrowRight, ChevronDown } from "lucide-react";
 import { CategoryIcon } from "@/components/category-dot";
+import { GitHubMark, REPO_URL } from "@/components/landing/github-mark";
 import { HowItWorks } from "@/components/landing/how-it-works";
 import { LandingNav } from "@/components/landing/landing-nav";
 import { RulerDemo } from "@/components/landing/ruler-demo";
@@ -34,18 +35,24 @@ async function Landing() {
             {L.hero.sub}
           </p>
           <div className="mt-9 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
-            <Link
-              href="/login"
-              className="inline-flex h-11 items-center rounded-full bg-tint px-6 text-[17px] font-medium text-white hover:opacity-90"
+            <a
+              href={REPO_URL}
+              className="inline-flex h-11 items-center gap-2 rounded-full bg-tint px-6 text-[17px] font-medium text-white hover:opacity-90"
             >
+              <GitHubMark className="size-[18px]" />
               {L.hero.cta}
-            </Link>
+            </a>
             <a href="#how" className="inline-flex items-center gap-1 text-[17px] text-tint hover:underline">
               {L.hero.secondary}
               <ArrowRight aria-hidden className="size-4" />
             </a>
           </div>
-          <p className="mt-4 text-[13px] text-muted-foreground">{L.hero.access}</p>
+          <p className="mt-4 text-[13px] text-muted-foreground">
+            {L.hero.access}{" "}
+            <Link href="/login" className="underline underline-offset-2 hover:text-foreground">
+              {L.hero.signIn}
+            </Link>
+          </p>
 
           <div className="mt-16">
             <RulerDemo t={L.demo} categories={t.categories} />
@@ -118,12 +125,14 @@ async function Landing() {
           <h2 className="mx-auto max-w-[640px] text-[32px] font-semibold leading-tight tracking-[-0.02em] sm:text-[48px]">
             {L.cta.title}
           </h2>
-          <Link
-            href="/login"
-            className="mt-9 inline-flex h-11 items-center rounded-full bg-tint px-6 text-[17px] font-medium text-white hover:opacity-90"
+          <a
+            href={REPO_URL}
+            className="mt-9 inline-flex h-11 items-center gap-2 rounded-full bg-tint px-6 text-[17px] font-medium text-white hover:opacity-90"
           >
+            <GitHubMark className="size-[18px]" />
             {L.cta.button}
-          </Link>
+          </a>
+          <p className="mt-4 text-[13px] text-muted-foreground">{L.cta.note}</p>
         </section>
       </main>
 
